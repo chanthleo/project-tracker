@@ -744,20 +744,39 @@ async function driveSave() {
   }
 }
 
+async function driveFindFile() {
+  // Search only — never create
+  const search = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name%3D'${GDRIVE_FILENAME}'+and+trashed%3Dfalse&fields=files(id,name,size)&orderBy=modifiedTime+desc`,
+    { headers: { Authorization: 'Bearer ' + gAccessToken } }
+  );
+  const data = await search.json();
+  if (data.files && data.files.length > 0) {
+    // Prefer files with actual content (size > 0)
+    const nonEmpty = data.files.find(f => parseInt(f.size || 0) > 0);
+    return nonEmpty ? nonEmpty.id : data.files[0].id;
+  }
+  return null;
+}
+
 async function driveLoad() {
   if (!gAccessToken) { driveSetStatus('Not signed in', 'err'); return; }
   driveSetStatus('Loading…');
   try {
-    const fileId = gFileId || await driveFindOrCreateFile();
-    if (!fileId) { driveSetStatus('No backup file found on Drive', 'err'); return; }
+    // Use find-only (don't auto-create on load)
+    const fileId = await driveFindFile();
+    if (!fileId) { driveSetStatus('No backup file found on Drive. Save first!', 'err'); return; }
+    gFileId = fileId;
     const res = await fetch(
       `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
       { headers: { Authorization: 'Bearer ' + gAccessToken } }
     );
-    if (!res.ok) throw new Error(res.statusText);
-    const data = JSON.parse(await res.text());
+    if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+    const text = await res.text();
+    if (!text || !text.trim()) { driveSetStatus('Drive file is empty. Try saving first!', 'err'); return; }
+    const data = JSON.parse(text);
     const incoming = Array.isArray(data) ? data : (data.projects || []);
-    if (!Array.isArray(incoming) || !incoming.length) { driveSetStatus('File is empty or invalid', 'err'); return; }
+    if (!Array.isArray(incoming) || !incoming.length) { driveSetStatus('No projects found in Drive file', 'err'); return; }
     const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s) on Drive.\n\nOK → Replace all current projects\nCancel → Merge with current`);
     if (replace) { projects = incoming; }
     else {
