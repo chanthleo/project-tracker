@@ -658,7 +658,7 @@ const GDRIVE_FILENAME  = 'projects-backup.json';
 
 let gTokenClient = null;
 let gAccessToken = null;
-let gFileId      = null; // cached Drive file ID once found/created
+let gFileId      = localStorage.getItem('gdrive_file_id') || null;
 
 function driveSetStatus(msg, type = '') {
   const el = document.getElementById('drive-status');
@@ -667,15 +667,15 @@ function driveSetStatus(msg, type = '') {
 }
 
 function driveUpdateUI(signedIn) {
-  document.getElementById('drive-signin-btn').style.display  = signedIn ? 'none'         : '';
-  document.getElementById('drive-save-btn').style.display    = signedIn ? ''             : 'none';
-  document.getElementById('drive-load-btn').style.display    = signedIn ? ''             : 'none';
-  document.getElementById('drive-signout-btn').style.display = signedIn ? ''             : 'none';
+  document.getElementById('drive-signin-btn').style.display  = signedIn ? 'none' : '';
+  document.getElementById('drive-save-btn').style.display    = signedIn ? ''     : 'none';
+  document.getElementById('drive-load-btn').style.display    = signedIn ? ''     : 'none';
+  document.getElementById('drive-signout-btn').style.display = signedIn ? ''     : 'none';
 }
 
 function driveSignIn() {
   if (GDRIVE_CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
-    alert('Please open the HTML file in a text editor and replace YOUR_CLIENT_ID_HERE with your Google OAuth Client ID.\n\nSee the instructions above the toolbar for setup steps.');
+    alert('Please replace YOUR_CLIENT_ID_HERE with your actual Google OAuth Client ID.');
     return;
   }
   if (!gTokenClient) {
@@ -686,7 +686,7 @@ function driveSignIn() {
         if (resp.error) { driveSetStatus('Sign-in failed: ' + resp.error, 'err'); return; }
         gAccessToken = resp.access_token;
         driveUpdateUI(true);
-        driveSetStatus('Signed in ✓', 'ok');
+        driveSetStatus(gFileId ? 'Signed in ✓ (file linked)' : 'Signed in ✓', 'ok');
       }
     });
   }
@@ -694,16 +694,13 @@ function driveSignIn() {
 }
 
 function driveSignOut() {
-  if (gAccessToken) {
-    google.accounts.oauth2.revoke(gAccessToken, () => {});
-    gAccessToken = null; gFileId = null;
-  }
+  if (gAccessToken) { google.accounts.oauth2.revoke(gAccessToken, () => {}); gAccessToken = null; }
   driveUpdateUI(false);
   driveSetStatus('Signed out');
 }
 
 async function driveFindOrCreateFile() {
-  // Search for existing file
+  // Try search first
   const search = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=name%3D'${GDRIVE_FILENAME}'+and+trashed%3Dfalse&fields=files(id,name)`,
     { headers: { Authorization: 'Bearer ' + gAccessToken } }
@@ -711,9 +708,10 @@ async function driveFindOrCreateFile() {
   const data = await search.json();
   if (data.files && data.files.length > 0) {
     gFileId = data.files[0].id;
+    localStorage.setItem('gdrive_file_id', gFileId);
     return gFileId;
   }
-  // Create new file (metadata only; content uploaded separately via PATCH)
+  // Create new empty file
   const create = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + gAccessToken, 'Content-Type': 'application/json' },
@@ -721,6 +719,7 @@ async function driveFindOrCreateFile() {
   });
   const file = await create.json();
   gFileId = file.id;
+  localStorage.setItem('gdrive_file_id', gFileId);
   return gFileId;
 }
 
@@ -737,7 +736,10 @@ async function driveSave() {
       `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
       { method: 'PATCH', headers: { Authorization: 'Bearer ' + gAccessToken }, body: form }
     );
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const saved = await res.json();
+    gFileId = saved.id || fileId;
+    localStorage.setItem('gdrive_file_id', gFileId);
     driveSetStatus('Saved to Drive ✓  ' + new Date().toLocaleTimeString(), 'ok');
   } catch(e) {
     driveSetStatus('Save failed: ' + e.message, 'err');
@@ -745,14 +747,12 @@ async function driveSave() {
 }
 
 async function driveFindFile() {
-  // Search only — never create
   const search = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=name%3D'${GDRIVE_FILENAME}'+and+trashed%3Dfalse&fields=files(id,name,size)&orderBy=modifiedTime+desc`,
     { headers: { Authorization: 'Bearer ' + gAccessToken } }
   );
   const data = await search.json();
   if (data.files && data.files.length > 0) {
-    // Prefer files with actual content (size > 0)
     const nonEmpty = data.files.find(f => parseInt(f.size || 0) > 0);
     return nonEmpty ? nonEmpty.id : data.files[0].id;
   }
@@ -763,21 +763,26 @@ async function driveLoad() {
   if (!gAccessToken) { driveSetStatus('Not signed in', 'err'); return; }
   driveSetStatus('Loading…');
   try {
-    // Use find-only (don't auto-create on load)
-    const fileId = await driveFindFile();
-    if (!fileId) { driveSetStatus('No backup file found on Drive. Save first!', 'err'); return; }
-    gFileId = fileId;
+    // Use cached file ID first, then fall back to search
+    let fileId = gFileId || await driveFindFile();
+    if (!fileId) { driveSetStatus('No backup found. Try saving first!', 'err'); return; }
     const res = await fetch(
       `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
       { headers: { Authorization: 'Bearer ' + gAccessToken } }
     );
     if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + res.statusText);
     const text = await res.text();
-    if (!text || !text.trim()) { driveSetStatus('Drive file is empty. Try saving first!', 'err'); return; }
-    const data = JSON.parse(text);
+    if (!text || !text.trim()) {
+      // Cached ID points to empty file — try searching instead
+      gFileId = null; localStorage.removeItem('gdrive_file_id');
+      fileId = await driveFindFile();
+      if (!fileId) { driveSetStatus('Drive file is empty. Save first!', 'err'); return; }
+    }
+    const data = JSON.parse(text || '{}');
     const incoming = Array.isArray(data) ? data : (data.projects || []);
-    if (!Array.isArray(incoming) || !incoming.length) { driveSetStatus('No projects found in Drive file', 'err'); return; }
-    const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s) on Drive.\n\nOK → Replace all current projects\nCancel → Merge with current`);
+    if (!Array.isArray(incoming) || !incoming.length) { driveSetStatus('No projects in Drive file', 'err'); return; }
+    gFileId = fileId; localStorage.setItem('gdrive_file_id', gFileId);
+    const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s) on Drive.\n\nOK → Replace all\nCancel → Merge`);
     if (replace) { projects = incoming; }
     else {
       const ids = new Set(projects.map(p => p.id));
