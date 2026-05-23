@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>My Project Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -26,6 +24,24 @@
   --pri-med-bg: #FEF7E6; --pri-med-t: #8A5C00;
   --pri-low-bg: #EEF7F0; --pri-low-t: #1E6B42;
   --radius: 10px; --radius-sm: 6px;
+  --theme-transition: background .25s, color .25s, border-color .25s, box-shadow .25s;
+}
+
+[data-theme="dark"] {
+  --bg:        #181613;
+  --surface:   #242017;
+  --border:    #38342C;
+  --border-md: #524E44;
+  --text:      #EDE8DF;
+  --muted:     #9A9080;
+  --hint:      #6A6256;
+  --accent:    #E07840;
+  --col-todo:  #1E2540; --col-todo-b:#3A4F8A; --col-todo-t:#8AAAF0;
+  --col-prog:  #2A2010; --col-prog-b:#6A5010; --col-prog-t:#F0C060;
+  --col-done:  #0E2018; --col-done-b:#1E5C38; --col-done-t:#5ADDA0;
+  --pri-high-bg:#2E1210; --pri-high-t:#F08070;
+  --pri-med-bg: #2A2010; --pri-med-t: #F0C060;
+  --pri-low-bg: #0E2018; --pri-low-t: #5ADDA0;
 }
 
 body {
@@ -34,12 +50,57 @@ body {
   color: var(--text);
   min-height: 100vh;
   padding: 0 0 60px;
+  transition: var(--theme-transition);
 }
 
-header { padding: 40px 40px 0; margin-bottom: 28px; }
+header { padding: 40px 40px 0; margin-bottom: 28px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.header-text {}
 header h1 { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600; line-height: 1.2; }
 header h1 span { font-style: italic; color: var(--accent); }
 header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+.header-controls { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-shrink: 0; }
+
+.theme-toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, color .2s, transform .2s;
+  font-size: 18px;
+  line-height: 1;
+}
+.theme-toggle:hover {
+  background: var(--bg);
+  border-color: var(--border-md);
+  color: var(--text);
+  transform: rotate(20deg);
+}
+
+/* ── Encryption lock button ── */
+.enc-toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, color .2s, transform .15s;
+  font-size: 17px;
+  line-height: 1;
+  position: relative;
+}
+.enc-toggle:hover { background: var(--bg); border-color: var(--border-md); color: var(--text); }
+.enc-toggle.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--pri-high-bg);
+}
+.enc-toggle.active:hover { transform: scale(1.1); }
 
 .toolbar { display: flex; gap: 8px; padding: 0 40px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; }
 .toolbar-label { font-size: 12px; color: var(--hint); margin-right: 4px; }
@@ -52,11 +113,13 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
 .tool-btn:hover { background: var(--bg); border-color: var(--border-md); color: var(--text); }
 .tool-btn.import-btn:hover { border-color: var(--accent); color: var(--accent); }
 .tool-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-.tool-btn.drive-btn:hover { border-color: #4285F4; color: #4285F4; }
-.tool-btn.drive-save-btn:hover { border-color: #0F9D58; color: #0F9D58; }
-.drive-status { font-size: 12px; color: var(--hint); align-self: center; }
-.drive-status.ok { color: #0F9D58; }
-.drive-status.err { color: var(--pri-high-t); }
+.tool-btn.gh-btn:hover { border-color: #6e40c9; color: #6e40c9; }
+.tool-btn.gh-save-btn:hover { border-color: #2da44e; color: #2da44e; }
+.tool-btn.gh-settings-btn:hover { border-color: var(--text); color: var(--text); }
+.gh-status { font-size: 12px; color: var(--hint); align-self: center; }
+.gh-status.ok { color: #2da44e; }
+.gh-status.err { color: var(--pri-high-t); }
+.gh-status.loading { color: var(--accent); }
 .toolbar-sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; margin: 0 4px; }
 .last-export { font-size: 12px; color: var(--hint); margin-left: 4px; align-self: center; }
 
@@ -159,7 +222,7 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   pointer-events: none;
 }
 
-/* ── Modal ── */
+/* ── Modal (shared) ── */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(42,37,32,.45);
   display: flex; align-items: center; justify-content: center;
@@ -257,17 +320,140 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
 }
 .modal-save:hover { opacity: .88; }
 
+/* ── Encryption Modals ── */
+.enc-modal-overlay {
+  position: fixed; inset: 0; background: rgba(42,37,32,.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+  backdrop-filter: blur(4px);
+}
+.enc-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.enc-modal {
+  background: var(--surface); border-radius: 16px; border: 1.5px solid var(--border);
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column;
+  transform: translateY(20px) scale(.97); transition: transform .22s;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+.enc-modal-overlay.open .enc-modal { transform: translateY(0) scale(1); }
+
+.enc-modal-icon {
+  text-align: center; padding: 28px 24px 0;
+  font-size: 40px; line-height: 1;
+}
+.enc-modal-title {
+  font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600;
+  text-align: center; color: var(--text); padding: 10px 24px 4px;
+}
+.enc-modal-sub {
+  font-size: 13px; color: var(--muted); text-align: center;
+  padding: 0 28px 20px; line-height: 1.6;
+}
+.enc-modal-body { padding: 4px 24px 8px; display: flex; flex-direction: column; gap: 12px; }
+
+.enc-field { display: flex; flex-direction: column; gap: 5px; }
+.enc-field label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--hint); }
+.enc-input {
+  width: 100%; padding: 10px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; color: var(--text);
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius);
+  outline: none; transition: border-color .15s;
+}
+.enc-input:focus { border-color: var(--accent); }
+.enc-input.err { border-color: var(--pri-high-t); animation: shake .35s ease; }
+
+.enc-error {
+  font-size: 12px; color: var(--pri-high-t); min-height: 16px;
+  text-align: center; padding: 0 24px;
+}
+
+.enc-modal-footer {
+  padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 8px;
+}
+.enc-btn-primary {
+  width: 100%; padding: 11px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600;
+  color: #fff; background: var(--accent); border: none; border-radius: var(--radius);
+  cursor: pointer; transition: opacity .15s, transform .1s;
+}
+.enc-btn-primary:hover { opacity: .88; }
+.enc-btn-primary:active { transform: scale(.98); }
+.enc-btn-secondary {
+  width: 100%; padding: 9px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--muted); background: transparent; border: 1.5px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: background .12s, color .12s;
+}
+.enc-btn-secondary:hover { background: var(--bg); color: var(--text); }
+.enc-btn-danger {
+  width: 100%; padding: 9px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--pri-high-t); background: transparent; border: 1.5px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: background .12s, border-color .12s;
+}
+.enc-btn-danger:hover { background: var(--pri-high-bg); border-color: var(--pri-high-t); }
+
+.enc-hint {
+  font-size: 11.5px; color: var(--hint); text-align: center;
+  padding: 0 24px 18px; line-height: 1.5;
+}
+.enc-hint strong { color: var(--pri-high-t); }
+
+.enc-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+/* GitHub settings specific styles */
+.gh-help {
+  font-size: 11.5px; color: var(--muted);
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 12px; margin: 0 24px 4px; line-height: 1.55;
+}
+.gh-help a { color: var(--accent); text-decoration: none; }
+.gh-help a:hover { text-decoration: underline; }
+.gh-help code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; background: var(--surface); padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.gh-row { display: flex; gap: 8px; }
+.gh-row .enc-field { flex: 1; min-width: 0; }
+.gh-checkbox-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text); cursor: pointer;
+  padding: 4px 0;
+}
+.gh-checkbox-row input { accent-color: var(--accent); cursor: pointer; }
+.gh-checkbox-sub { font-size: 11.5px; color: var(--hint); margin-left: 24px; margin-top: -2px; }
+
+/* Password strength bar */
+.enc-strength { height: 4px; border-radius: 2px; background: var(--border); margin-top: 4px; overflow: hidden; }
+.enc-strength-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; width: 0; }
+
+/* Shake animation for wrong password */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+
 @media (max-width: 700px) {
   header, .add-bar, .board, .stats, .toolbar { padding-left: 18px; padding-right: 18px; }
   .board { grid-template-columns: 1fr; }
+  .header-controls { margin-top: 4px; }
 }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>My <span>Projects</span></h1>
-  <p>Drag cards between columns · Click a card title to add notes &amp; to-dos</p>
+  <div class="header-text">
+    <h1>My <span>Projects</span></h1>
+    <p>Drag cards between columns · Click a card title to add notes &amp; to-dos</p>
+  </div>
+  <div class="header-controls">
+    <button class="enc-toggle" id="enc-toggle-btn" onclick="openEncModal()" title="Encryption settings" aria-label="Encryption settings">🔓</button>
+    <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+  </div>
 </header>
 
 <div class="stats" id="stats"></div>
@@ -289,27 +475,27 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
   <span class="last-export" id="last-export"></span>
   <div class="toolbar-sep"></div>
-  <span class="toolbar-label">Google Drive:</span>
-  <button class="tool-btn drive-btn" onclick="driveSignIn()" id="drive-signin-btn">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
-    </svg>
-    Sign in
-  </button>
-  <button class="tool-btn drive-save-btn" onclick="driveSave()" id="drive-save-btn" style="display:none">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/>
-    </svg>
-    Save to Drive
-  </button>
-  <button class="tool-btn drive-btn" onclick="driveLoad()" id="drive-load-btn" style="display:none">
+  <span class="toolbar-label">GitHub:</span>
+  <button class="tool-btn gh-btn" onclick="ghLoad()" id="gh-load-btn">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
       <path d="M8 10V2M5 5l3-3 3 3"/><rect x="2" y="11" width="12" height="3" rx="1"/>
     </svg>
-    Load from Drive
+    Load from GitHub
   </button>
-  <button class="tool-btn" onclick="driveSignOut()" id="drive-signout-btn" style="display:none; font-size:12px">Sign out</button>
-  <span class="drive-status" id="drive-status"></span>
+  <button class="tool-btn gh-save-btn" onclick="ghSave()" id="gh-save-btn">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/>
+    </svg>
+    Save to GitHub
+  </button>
+  <button class="tool-btn gh-settings-btn" onclick="openGhSettingsModal()" id="gh-settings-btn" title="GitHub settings">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="2.2"/>
+      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/>
+    </svg>
+    Settings
+  </button>
+  <span class="gh-status" id="gh-status"></span>
 </div>
 
 <div class="add-bar">
@@ -353,7 +539,7 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Project detail modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-header">
@@ -385,6 +571,40 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   </div>
 </div>
 
+<!-- Unlock modal (shown on load when data is encrypted) -->
+<div class="enc-modal-overlay" id="unlock-overlay">
+  <div class="enc-modal">
+    <div class="enc-modal-icon">🔒</div>
+    <div class="enc-modal-title">Your data is encrypted</div>
+    <div class="enc-modal-sub">Enter your password to unlock your projects.</div>
+    <div class="enc-modal-body">
+      <div class="enc-field">
+        <label for="unlock-pw">Password</label>
+        <input type="password" class="enc-input" id="unlock-pw" placeholder="Enter password…" autocomplete="current-password" />
+      </div>
+    </div>
+    <div class="enc-error" id="unlock-error"></div>
+    <div class="enc-modal-footer">
+      <button class="enc-btn-primary" id="unlock-btn" onclick="submitUnlock()">Unlock</button>
+    </div>
+    <div class="enc-hint"><strong>⚠ Forgotten password = data unrecoverable.</strong><br>There is no reset option.</div>
+  </div>
+</div>
+
+<!-- Encryption settings modal -->
+<div class="enc-modal-overlay" id="enc-settings-overlay">
+  <div class="enc-modal" id="enc-settings-modal">
+    <!-- content rendered dynamically by renderEncModal() -->
+  </div>
+</div>
+
+<!-- GitHub settings modal -->
+<div class="enc-modal-overlay" id="gh-settings-overlay">
+  <div class="enc-modal" id="gh-settings-modal">
+    <!-- content rendered dynamically by renderGhSettingsModal() -->
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'my_projects_v1';
 const PRI_LABEL   = { low: 'Low', med: 'Medium', high: 'High' };
@@ -398,19 +618,346 @@ let projects = [];
 let dragId   = null;
 let activeId = null;
 
-/* ── Storage ── */
-function load() {
-  try { const r = localStorage.getItem(STORAGE_KEY); projects = r ? JSON.parse(r) : []; }
-  catch(e) { projects = []; }
-  render();
+/* ══════════════════════════════════════════════════
+   ── Encryption Engine (Web Crypto API) ──
+   ══════════════════════════════════════════════════ */
+let sessionKey = null; // CryptoKey in memory while unlocked
+
+const ENC_STORAGE_KEY = 'my_projects_enc_v1'; // key for encrypted blob in localStorage
+
+function ab2b64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projects)); } catch(e) {}
+function b642ab(b64) {
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptJSON(obj, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const key  = await deriveKey(password, salt);
+  const enc  = new TextEncoder();
+  const ct   = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj)));
+  return { enc: true, salt: ab2b64(salt), iv: ab2b64(iv), data: ab2b64(ct) };
+}
+
+async function decryptJSON(payload, password) {
+  const salt = b642ab(payload.salt);
+  const iv   = b642ab(payload.iv);
+  const ct   = b642ab(payload.data);
+  const key  = await deriveKey(password, salt);
+  const pt   = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+function isEncryptedPayload(obj) {
+  return obj && obj.enc === true && obj.salt && obj.iv && obj.data;
+}
+
+function encryptionEnabled() {
+  try {
+    const raw = localStorage.getItem(ENC_STORAGE_KEY);
+    if (!raw) return false;
+    const p = JSON.parse(raw);
+    return isEncryptedPayload(p);
+  } catch { return false; }
+}
+
+function updateEncToggleUI() {
+  const btn = document.getElementById('enc-toggle-btn');
+  if (encryptionEnabled()) {
+    btn.textContent = '🔒';
+    btn.classList.add('active');
+    btn.title = 'Encryption ON – click to manage';
+  } else {
+    btn.textContent = '🔓';
+    btn.classList.remove('active');
+    btn.title = 'Encryption OFF – click to enable';
+  }
+}
+
+/* ── Load (with decryption support) ── */
+async function load() {
+  try {
+    // Try encrypted store first
+    const encRaw = localStorage.getItem(ENC_STORAGE_KEY);
+    if (encRaw) {
+      const payload = JSON.parse(encRaw);
+      if (isEncryptedPayload(payload)) {
+        // Show unlock modal; do not render until unlocked
+        showUnlockModal(payload);
+        updateEncToggleUI();
+        return;
+      }
+    }
+    // Fall back to plaintext store
+    const r = localStorage.getItem(STORAGE_KEY);
+    projects = r ? JSON.parse(r) : [];
+  } catch(e) { projects = []; }
+  updateEncToggleUI();
+  render();
+  if (typeof ghMaybeAutoLoad === 'function') ghMaybeAutoLoad();
+}
+
+/* ── Save (encrypts if a session password is set) ──
+   Refactored: saveLocalOnly() does the localStorage write only.
+   save() additionally flashes the "saved" badge and triggers GitHub auto-sync. */
+async function saveLocalOnly() {
+  try {
+    if (sessionPasswordCache) {
+      const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, sessionPasswordCache);
+      localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
+      localStorage.removeItem(STORAGE_KEY); // ensure no plaintext copy lingers
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      localStorage.removeItem(ENC_STORAGE_KEY);
+    }
+  } catch(e) {}
+}
+
+async function save() {
+  await saveLocalOnly();
   const el = document.getElementById('saved-msg');
   el.classList.add('show');
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.remove('show'), 1600);
+  // If GitHub auto-save is enabled, push to remote (debounced)
+  if (typeof ghMaybeAutoSave === 'function') ghMaybeAutoSave();
 }
+
+// Cached password for the session (stays in JS memory only, not persisted)
+let sessionPasswordCache = null;
+
+/* ── Unlock modal ── */
+function showUnlockModal(payload) {
+  document.getElementById('unlock-pw').value = '';
+  document.getElementById('unlock-error').textContent = '';
+  document.getElementById('unlock-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('unlock-pw').focus(), 180);
+  document.getElementById('unlock-btn')._payload = payload;
+}
+
+async function submitUnlock() {
+  const pw  = document.getElementById('unlock-pw').value;
+  const inp = document.getElementById('unlock-pw');
+  const btn = document.getElementById('unlock-btn');
+  const errEl = document.getElementById('unlock-error');
+  if (!pw) { inp.classList.add('err'); setTimeout(() => inp.classList.remove('err'), 400); return; }
+
+  btn.textContent = 'Unlocking…'; btn.disabled = true;
+  try {
+    const payload = btn._payload;
+    const data = await decryptJSON(payload, pw);
+    projects = Array.isArray(data) ? data : (data.projects || []);
+    sessionPasswordCache = pw;
+    document.getElementById('unlock-overlay').classList.remove('open');
+    render();
+    updateEncToggleUI();
+    if (typeof ghMaybeAutoLoad === 'function') ghMaybeAutoLoad();
+  } catch(e) {
+    errEl.textContent = '❌ Wrong password. Please try again.';
+    inp.value = '';
+    inp.classList.add('err');
+    setTimeout(() => inp.classList.remove('err'), 400);
+    inp.focus();
+  }
+  btn.textContent = 'Unlock'; btn.disabled = false;
+}
+
+/* ── Encryption settings modal ── */
+function openEncModal() {
+  renderEncModal();
+  document.getElementById('enc-settings-overlay').classList.add('open');
+}
+function closeEncModal() {
+  document.getElementById('enc-settings-overlay').classList.remove('open');
+}
+
+function renderEncModal() {
+  const isOn = encryptionEnabled();
+  const modal = document.getElementById('enc-settings-modal');
+
+  if (!isOn) {
+    // Enable encryption form
+    modal.innerHTML = `
+      <div class="enc-modal-icon">🔐</div>
+      <div class="enc-modal-title">Enable Encryption</div>
+      <div class="enc-modal-sub">Your data will be encrypted with AES-256-GCM.<br>Choose a strong password you'll remember.</div>
+      <div class="enc-modal-body">
+        <div class="enc-field">
+          <label for="enc-pw1">New Password</label>
+          <input type="password" class="enc-input" id="enc-pw1" placeholder="Enter password…" autocomplete="new-password" oninput="updateStrength(this.value)" />
+          <div class="enc-strength"><div class="enc-strength-fill" id="enc-strength-fill"></div></div>
+        </div>
+        <div class="enc-field">
+          <label for="enc-pw2">Confirm Password</label>
+          <input type="password" class="enc-input" id="enc-pw2" placeholder="Confirm password…" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="enc-error" id="enc-setup-error"></div>
+      <div class="enc-modal-footer">
+        <button class="enc-btn-primary" onclick="enableEncryption()">🔒 Enable Encryption</button>
+        <button class="enc-btn-secondary" onclick="closeEncModal()">Cancel</button>
+      </div>
+      <div class="enc-hint"><strong>⚠ Warning:</strong> If you forget your password, your data cannot be recovered. There is no reset.</div>
+    `;
+    setTimeout(() => document.getElementById('enc-pw1').focus(), 180);
+  } else {
+    // Manage encryption form
+    modal.innerHTML = `
+      <div class="enc-modal-icon">🔒</div>
+      <div class="enc-modal-title">Encryption is ON</div>
+      <div class="enc-modal-sub">Your data is encrypted with AES-256-GCM. To change or remove encryption, verify your current password.</div>
+      <div class="enc-modal-body">
+        <div class="enc-field">
+          <label for="enc-cur-pw">Current Password</label>
+          <input type="password" class="enc-input" id="enc-cur-pw" placeholder="Current password…" autocomplete="current-password" />
+        </div>
+        <hr class="enc-divider">
+        <div class="enc-field">
+          <label for="enc-new-pw1">New Password <span style="font-weight:400;text-transform:none;letter-spacing:0">(leave blank to keep)</span></label>
+          <input type="password" class="enc-input" id="enc-new-pw1" placeholder="New password…" autocomplete="new-password" oninput="updateStrength(this.value)" />
+          <div class="enc-strength"><div class="enc-strength-fill" id="enc-strength-fill"></div></div>
+        </div>
+        <div class="enc-field">
+          <label for="enc-new-pw2">Confirm New Password</label>
+          <input type="password" class="enc-input" id="enc-new-pw2" placeholder="Confirm new password…" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="enc-error" id="enc-setup-error"></div>
+      <div class="enc-modal-footer">
+        <button class="enc-btn-primary" onclick="changePassword()">Save Changes</button>
+        <button class="enc-btn-secondary" onclick="closeEncModal()">Cancel</button>
+        <button class="enc-btn-danger" onclick="removeEncryption()">🔓 Remove Encryption</button>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('enc-cur-pw').focus(), 180);
+  }
+}
+
+function updateStrength(pw) {
+  const fill = document.getElementById('enc-strength-fill');
+  if (!fill) return;
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['#E05050','#E07840','#E0C040','#60B860','#2A9D2A'];
+  const widths  = ['20%','40%','60%','80%','100%'];
+  fill.style.width = pw ? widths[Math.min(score,4)] : '0';
+  fill.style.background = pw ? colors[Math.min(score,4)] : 'transparent';
+}
+
+async function enableEncryption() {
+  const pw1 = document.getElementById('enc-pw1').value;
+  const pw2 = document.getElementById('enc-pw2').value;
+  const err = document.getElementById('enc-setup-error');
+  if (!pw1) { err.textContent = 'Please enter a password.'; return; }
+  if (pw1.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pw1 !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+  err.textContent = '';
+
+  try {
+    const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, pw1);
+    localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
+    localStorage.removeItem(STORAGE_KEY);
+    sessionPasswordCache = pw1;
+    closeEncModal();
+    updateEncToggleUI();
+    showSavedMsg('🔒 Encryption enabled!');
+  } catch(e) { err.textContent = 'Encryption failed: ' + e.message; }
+}
+
+async function changePassword() {
+  const curPw  = document.getElementById('enc-cur-pw').value;
+  const newPw1 = document.getElementById('enc-new-pw1').value;
+  const newPw2 = document.getElementById('enc-new-pw2').value;
+  const err    = document.getElementById('enc-setup-error');
+  if (!curPw) { err.textContent = 'Please enter your current password.'; return; }
+
+  // Verify current password
+  try {
+    const encRaw = localStorage.getItem(ENC_STORAGE_KEY);
+    const payload = JSON.parse(encRaw);
+    await decryptJSON(payload, curPw); // throws if wrong
+  } catch(e) {
+    err.textContent = '❌ Current password is incorrect.';
+    const inp = document.getElementById('enc-cur-pw');
+    inp.classList.add('err'); setTimeout(() => inp.classList.remove('err'), 400);
+    return;
+  }
+
+  // Determine new password
+  const usePw = newPw1 || curPw;
+  if (newPw1 && newPw1 !== newPw2) { err.textContent = 'New passwords do not match.'; return; }
+  if (newPw1 && newPw1.length < 6) { err.textContent = 'New password must be at least 6 characters.'; return; }
+
+  try {
+    const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, usePw);
+    localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
+    sessionPasswordCache = usePw;
+    closeEncModal();
+    updateEncToggleUI();
+    showSavedMsg(newPw1 ? '🔑 Password changed!' : '✓ Password confirmed');
+  } catch(e) { err.textContent = 'Failed: ' + e.message; }
+}
+
+async function removeEncryption() {
+  const curPw = document.getElementById('enc-cur-pw').value;
+  const err   = document.getElementById('enc-setup-error');
+  if (!curPw) { err.textContent = 'Enter your current password to confirm removal.'; return; }
+
+  try {
+    const encRaw = localStorage.getItem(ENC_STORAGE_KEY);
+    const payload = JSON.parse(encRaw);
+    await decryptJSON(payload, curPw); // verify
+  } catch(e) {
+    err.textContent = '❌ Current password is incorrect.';
+    const inp = document.getElementById('enc-cur-pw');
+    inp.classList.add('err'); setTimeout(() => inp.classList.remove('err'), 400);
+    return;
+  }
+
+  if (!confirm('Remove encryption? Your data will be stored as plain text.\n\nAnyone with access to your browser can read it.')) return;
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  localStorage.removeItem(ENC_STORAGE_KEY);
+  sessionPasswordCache = null;
+  closeEncModal();
+  updateEncToggleUI();
+  showSavedMsg('🔓 Encryption removed');
+}
+
+function showSavedMsg(text) {
+  const el = document.getElementById('saved-msg');
+  el.textContent = text || 'Saved ✓';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.classList.remove('show'); el.textContent = 'Saved ✓'; }, 2400);
+}
+
+/* ══════════════════════════════════════════
+   ── Core App Logic ──
+   ══════════════════════════════════════════ */
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -476,14 +1023,13 @@ function del(id) {
 }
 
 /* ── Drag & Drop ── */
-let dropTarget = null; // { cardId, pos: 'before'|'after' } or null (= end of column)
+let dropTarget = null;
 
 function clearIndicators() {
   document.querySelectorAll('.card.drop-before, .card.drop-after')
     .forEach(c => { c.classList.remove('drop-before'); c.classList.remove('drop-after'); });
   document.querySelectorAll('.card-list').forEach(c => c.classList.remove('drag-over'));
 }
-
 function onDragStart(e, id) {
   dragId = id;
   e.dataTransfer.effectAllowed = 'move';
@@ -498,8 +1044,6 @@ function onDragOver(e, col) {
   e.preventDefault(); e.dataTransfer.dropEffect = 'move';
   clearIndicators();
   document.getElementById('col-' + col).classList.add('drag-over');
-
-  // Find which card we're hovering over
   const cardEl = e.target.closest('.card');
   if (cardEl && cardEl.id !== 'card-' + dragId) {
     const rect = cardEl.getBoundingClientRect();
@@ -507,11 +1051,10 @@ function onDragOver(e, col) {
     cardEl.classList.add('drop-' + pos);
     dropTarget = { cardId: cardEl.id.replace('card-', ''), pos };
   } else {
-    dropTarget = null; // drop at end of column
+    dropTarget = null;
   }
 }
 function onDragLeave(e) {
-  // Only clear if truly leaving the list (not just moving between children)
   if (!e.currentTarget.contains(e.relatedTarget)) {
     e.currentTarget.classList.remove('drag-over');
     clearIndicators();
@@ -522,32 +1065,24 @@ function onDrop(e, col) {
   e.preventDefault();
   clearIndicators();
   if (!dragId) return;
-
-  // Remove dragged card from array
   const dragIdx = projects.findIndex(x => x.id === dragId);
   if (dragIdx === -1) { dragId = null; dropTarget = null; return; }
   const [dragged] = projects.splice(dragIdx, 1);
   dragged.col = col;
-
   if (dropTarget && dropTarget.cardId) {
     const targetIdx = projects.findIndex(x => x.id === dropTarget.cardId);
     if (targetIdx !== -1) {
-      const insertAt = dropTarget.pos === 'before' ? targetIdx : targetIdx + 1;
-      projects.splice(insertAt, 0, dragged);
-    } else {
-      projects.push(dragged);
-    }
+      projects.splice(dropTarget.pos === 'before' ? targetIdx : targetIdx + 1, 0, dragged);
+    } else { projects.push(dragged); }
   } else {
-    // Append to end of the column's items
     const lastInCol = projects.reduce((acc, p, i) => p.col === col ? i : acc, -1);
     projects.splice(lastInCol + 1, 0, dragged);
   }
-
   dragId = null; dropTarget = null;
   render(); save();
 }
 
-/* ── Modal ── */
+/* ── Project detail Modal ── */
 function openModal(id) {
   const p = projects.find(x => x.id === id);
   if (!p) return;
@@ -605,195 +1140,475 @@ function closeModal() { saveModal(); }
 function handleOverlayClick(e) { if (e.target.id === 'modal-overlay') saveModal(); }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
-/* ── Export / Import ── */
-function exportData() {
-  const blob = new Blob([JSON.stringify({ exported: new Date().toISOString(), version: 1, projects }, null, 2)], { type: 'application/json' });
+/* ── Export / Import (encryption-aware) ── */
+async function exportData() {
+  let content;
+  const payload = { exported: new Date().toISOString(), version: 1, projects };
+  if (sessionPasswordCache) {
+    // Export as encrypted JSON
+    const encPayload = await encryptJSON(payload, sessionPasswordCache);
+    content = JSON.stringify(encPayload, null, 2);
+  } else {
+    content = JSON.stringify(payload, null, 2);
+  }
+  const blob = new Blob([content], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `projects-backup-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
-  document.getElementById('last-export').textContent = `Last exported: ${new Date().toLocaleTimeString()}`;
+  document.getElementById('last-export').textContent = `Last exported: ${new Date().toLocaleTimeString()}${sessionPasswordCache ? ' 🔒' : ''}`;
   try { localStorage.setItem('last_export', new Date().toISOString()); } catch(e) {}
 }
+
 function triggerImport() { document.getElementById('import-file').value = ''; document.getElementById('import-file').click(); }
+
 function importData(event) {
   const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
-      const data = JSON.parse(e.target.result);
-      const incoming = Array.isArray(data) ? data : (data.projects || []);
-      if (!Array.isArray(incoming)) throw new Error();
-      const count = incoming.length;
-      if (!count) { alert('No projects found in this file.'); return; }
-      const replace = projects.length === 0 || confirm(`Found ${count} project(s).\n\nOK → Replace all current projects\nCancel → Merge with current projects`);
-      if (replace) { projects = incoming; }
-      else {
-        const ids = new Set(projects.map(p => p.id));
-        const added = incoming.filter(p => !ids.has(p.id));
-        projects = [...projects, ...added];
-        alert(`Merged! Added ${added.length} new project(s).`);
+      const raw = JSON.parse(e.target.result);
+
+      if (isEncryptedPayload(raw)) {
+        // Prompt for password
+        const pw = prompt('This file is encrypted. Enter the password to import:');
+        if (pw === null) return;
+        try {
+          const decrypted = await decryptJSON(raw, pw);
+          const incoming = Array.isArray(decrypted) ? decrypted : (decrypted.projects || []);
+          mergeImport(incoming);
+        } catch(err) {
+          alert('Wrong password or corrupted file. Could not decrypt.');
+        }
+      } else {
+        const incoming = Array.isArray(raw) ? raw : (raw.projects || []);
+        if (!Array.isArray(incoming)) throw new Error();
+        mergeImport(incoming);
       }
-      render(); save();
     } catch(err) { alert('Could not read the file. Make sure it\'s a valid backup.'); }
   };
   reader.readAsText(file);
 }
 
+function mergeImport(incoming) {
+  if (!incoming.length) { alert('No projects found in this file.'); return; }
+  const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s).\n\nOK → Replace all current projects\nCancel → Merge with current projects`);
+  if (replace) { projects = incoming; }
+  else {
+    const ids = new Set(projects.map(p => p.id));
+    const added = incoming.filter(p => !ids.has(p.id));
+    projects = [...projects, ...added];
+    alert(`Merged! Added ${added.length} new project(s).`);
+  }
+  render(); save();
+}
+
 /* ── Keyboard shortcuts ── */
 document.getElementById('proj-input').addEventListener('keydown', e => { if (e.key === 'Enter') addProject(); });
 document.getElementById('check-input').addEventListener('keydown', e => { if (e.key === 'Enter') addCheckItem(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && activeId) saveModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (activeId) saveModal();
+    if (document.getElementById('enc-settings-overlay').classList.contains('open')) closeEncModal();
+    if (document.getElementById('gh-settings-overlay').classList.contains('open')) closeGhSettingsModal();
+  }
+});
+document.getElementById('unlock-pw').addEventListener('keydown', e => { if (e.key === 'Enter') submitUnlock(); });
+document.getElementById('enc-settings-overlay').addEventListener('click', e => {
+  if (e.target.id === 'enc-settings-overlay') closeEncModal();
+});
+document.getElementById('gh-settings-overlay').addEventListener('click', e => {
+  if (e.target.id === 'gh-settings-overlay') closeGhSettingsModal();
+});
 
 try {
   const le = localStorage.getItem('last_export');
   if (le) document.getElementById('last-export').textContent = `Last exported: ${new Date(le).toLocaleDateString()}`;
 } catch(e) {}
 
-/* ── Google Drive Integration ── */
-// ⚠️  REPLACE THIS with your actual OAuth 2.0 Client ID from Google Cloud Console
-const GDRIVE_CLIENT_ID = '6834305395-nrjbnl3uphd5f1i1dhhdtlipr9ce03ra.apps.googleusercontent.com';
-const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
-const GDRIVE_FILENAME  = 'projects-backup.json';
+/* ── Dark Mode ── */
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('theme-toggle-btn').textContent = dark ? '☀️' : '🌙';
+  document.getElementById('theme-toggle-btn').title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+}
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = !isDark;
+  applyTheme(next);
+  try { localStorage.setItem('theme_pref', next ? 'dark' : 'light'); } catch(e) {}
+}
+(function initTheme() {
+  let pref = 'light';
+  try { pref = localStorage.getItem('theme_pref') || 'light'; } catch(e) {}
+  if (pref === 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    pref = 'dark';
+  }
+  applyTheme(pref === 'dark');
+})();
 
-let gTokenClient = null;
-let gAccessToken = null;
-let gFileId      = localStorage.getItem('gdrive_file_id') || null;
 
-function driveSetStatus(msg, type = '') {
-  const el = document.getElementById('drive-status');
-  el.textContent = msg;
-  el.className = 'drive-status' + (type ? ' ' + type : '');
+/* ══════════════════════════════════════════
+   ── GitHub Integration ──
+   ══════════════════════════════════════════ */
+const GH_CONFIG_KEY = 'gh_config_v1';
+let ghConfig  = null;   // { token, owner, repo, path, branch, autoLoad, autoSave }
+let ghFileSha = null;   // SHA of the remote file (needed for PUT updates)
+let ghSaveTimer = null; // debounce timer for auto-save
+
+function ghLoadConfig() {
+  try {
+    const raw = localStorage.getItem(GH_CONFIG_KEY);
+    if (raw) ghConfig = JSON.parse(raw);
+  } catch(e) { ghConfig = null; }
+}
+function ghPersistConfig() {
+  try {
+    if (ghConfig) localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(ghConfig));
+    else localStorage.removeItem(GH_CONFIG_KEY);
+  } catch(e) {}
+}
+function ghIsConfigured() {
+  return !!(ghConfig && ghConfig.token && ghConfig.owner && ghConfig.repo && ghConfig.path);
+}
+function ghSetStatus(msg, type = '') {
+  const el = document.getElementById('gh-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'gh-status' + (type ? ' ' + type : '');
+}
+function ghHeaders() {
+  return {
+    'Authorization': 'Bearer ' + ghConfig.token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+function ghBuildUrl(includeRef = true) {
+  const encPath = ghConfig.path.split('/').map(encodeURIComponent).join('/');
+  let url = `https://api.github.com/repos/${encodeURIComponent(ghConfig.owner)}/${encodeURIComponent(ghConfig.repo)}/contents/${encPath}`;
+  if (includeRef && ghConfig.branch) url += `?ref=${encodeURIComponent(ghConfig.branch)}`;
+  return url;
 }
 
-function driveUpdateUI(signedIn) {
-  document.getElementById('drive-signin-btn').style.display  = signedIn ? 'none' : '';
-  document.getElementById('drive-save-btn').style.display    = signedIn ? ''     : 'none';
-  document.getElementById('drive-load-btn').style.display    = signedIn ? ''     : 'none';
-  document.getElementById('drive-signout-btn').style.display = signedIn ? ''     : 'none';
+/* Base64 ⇆ UTF-8 helpers (handles Unicode safely) */
+function ghEncodeB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function ghDecodeB64(b64) {
+  const bin = atob(b64.replace(/\s/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
 }
 
-function driveSignIn() {
-  if (GDRIVE_CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
-    alert('Please replace YOUR_CLIENT_ID_HERE with your actual Google OAuth Client ID.');
+function ghFriendlyError(status, body) {
+  if (status === 401) return 'Bad token (401). Token expired or invalid.';
+  if (status === 403) return 'Forbidden (403). Token may lack repo permission, or rate limited.';
+  if (status === 404) return 'Not found (404). Check owner / repo / path / branch.';
+  if (status === 409) return 'Conflict (409). Remote file changed — try again.';
+  if (status === 422) return 'Validation failed (422). Check SHA or branch.';
+  return `HTTP ${status}` + (body ? ': ' + body.slice(0, 120) : '');
+}
+
+/* ── Load from GitHub ── */
+async function ghLoad(silent = false) {
+  if (!ghIsConfigured()) {
+    if (!silent) { openGhSettingsModal(); ghSetStatus('Configure GitHub first', 'err'); }
     return;
   }
-  if (!gTokenClient) {
-    gTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GDRIVE_CLIENT_ID,
-      scope:     GDRIVE_SCOPE,
-      callback:  (resp) => {
-        if (resp.error) { driveSetStatus('Sign-in failed: ' + resp.error, 'err'); return; }
-        gAccessToken = resp.access_token;
-        driveUpdateUI(true);
-        driveSetStatus(gFileId ? 'Signed in ✓ (file linked)' : 'Signed in ✓', 'ok');
+  if (!silent) ghSetStatus('Loading…', 'loading');
+  try {
+    const res = await fetch(ghBuildUrl(true), { headers: ghHeaders() });
+    if (res.status === 404) {
+      ghFileSha = null;
+      ghSetStatus('File not found on GitHub yet. Click "Save to GitHub" to create it.', silent ? '' : 'err');
+      return;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(ghFriendlyError(res.status, body));
+    }
+    const data = await res.json();
+    ghFileSha = data.sha;
+    const text = ghDecodeB64(data.content);
+    if (!text || !text.trim()) { ghSetStatus('Remote file is empty.', 'err'); return; }
+    const parsed = JSON.parse(text);
+
+    if (isEncryptedPayload(parsed)) {
+      // If session password works, decrypt silently
+      if (sessionPasswordCache) {
+        try {
+          const dec = await decryptJSON(parsed, sessionPasswordCache);
+          const incoming = Array.isArray(dec) ? dec : (dec.projects || []);
+          return ghApplyIncoming(incoming, silent);
+        } catch(e) { /* fall through to prompt */ }
       }
+      const pw = prompt('The GitHub backup is encrypted. Enter the password to load:');
+      if (pw === null) { ghSetStatus('Load cancelled.', ''); return; }
+      try {
+        const dec = await decryptJSON(parsed, pw);
+        const incoming = Array.isArray(dec) ? dec : (dec.projects || []);
+        sessionPasswordCache = pw;
+        ghApplyIncoming(incoming, silent);
+      } catch(e) {
+        ghSetStatus('Wrong password — could not decrypt remote file.', 'err');
+      }
+    } else {
+      const incoming = Array.isArray(parsed) ? parsed : (parsed.projects || []);
+      ghApplyIncoming(incoming, silent);
+    }
+  } catch(e) {
+    ghSetStatus('Load failed: ' + e.message, 'err');
+  }
+}
+
+function ghApplyIncoming(incoming, silent) {
+  if (!Array.isArray(incoming)) { ghSetStatus('Remote file has no projects array.', 'err'); return; }
+  let replace = true;
+  if (!silent && projects.length > 0) {
+    replace = confirm(`Found ${incoming.length} project(s) on GitHub.\n\nOK → Replace all current projects\nCancel → Merge with current`);
+  }
+  if (replace) { projects = incoming; }
+  else {
+    const ids = new Set(projects.map(p => p.id));
+    projects = [...projects, ...incoming.filter(p => !ids.has(p.id))];
+  }
+  render();
+  saveLocalOnly(); // save to localStorage but DON'T trigger auto-sync back to GitHub
+  ghSetStatus(`Loaded ${incoming.length} project(s) from GitHub ✓ ${new Date().toLocaleTimeString()}`, 'ok');
+}
+
+/* ── Save to GitHub ── */
+async function ghSave(silent = false) {
+  if (!ghIsConfigured()) {
+    if (!silent) { openGhSettingsModal(); ghSetStatus('Configure GitHub first', 'err'); }
+    return;
+  }
+  if (!silent) ghSetStatus('Saving…', 'loading');
+
+  // Build content (encrypt if local encryption is on)
+  let content;
+  try {
+    const payload = { exported: new Date().toISOString(), version: 1, projects };
+    if (sessionPasswordCache) {
+      const enc = await encryptJSON(payload, sessionPasswordCache);
+      content = JSON.stringify(enc, null, 2);
+    } else {
+      content = JSON.stringify(payload, null, 2);
+    }
+  } catch(e) {
+    ghSetStatus('Could not prepare data: ' + e.message, 'err');
+    return;
+  }
+
+  // Ensure we have a SHA if a file already exists
+  if (ghFileSha === null) {
+    try {
+      const r = await fetch(ghBuildUrl(true), { headers: ghHeaders() });
+      if (r.ok) { const d = await r.json(); ghFileSha = d.sha; }
+    } catch(e) {}
+  }
+
+  const branch = ghConfig.branch || undefined;
+  const body = {
+    message: `Update projects backup — ${new Date().toISOString()}`,
+    content: ghEncodeB64(content)
+  };
+  if (branch)    body.branch = branch;
+  if (ghFileSha) body.sha    = ghFileSha;
+
+  try {
+    let res = await fetch(ghBuildUrl(false), {
+      method: 'PUT',
+      headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
-  }
-  gTokenClient.requestAccessToken();
-}
 
-function driveSignOut() {
-  if (gAccessToken) { google.accounts.oauth2.revoke(gAccessToken, () => {}); gAccessToken = null; }
-  driveUpdateUI(false);
-  driveSetStatus('Signed out');
-}
-
-async function driveFindOrCreateFile() {
-  // Try search first
-  const search = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name%3D'${GDRIVE_FILENAME}'+and+trashed%3Dfalse&fields=files(id,name)`,
-    { headers: { Authorization: 'Bearer ' + gAccessToken } }
-  );
-  const data = await search.json();
-  if (data.files && data.files.length > 0) {
-    gFileId = data.files[0].id;
-    localStorage.setItem('gdrive_file_id', gFileId);
-    return gFileId;
-  }
-  // Create new empty file
-  const create = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + gAccessToken, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: GDRIVE_FILENAME, mimeType: 'application/json' })
-  });
-  const file = await create.json();
-  gFileId = file.id;
-  localStorage.setItem('gdrive_file_id', gFileId);
-  return gFileId;
-}
-
-async function driveSave() {
-  if (!gAccessToken) { driveSetStatus('Not signed in', 'err'); return; }
-  driveSetStatus('Saving…');
-  try {
-    const fileId = gFileId || await driveFindOrCreateFile();
-    const content = JSON.stringify({ exported: new Date().toISOString(), version: 1, projects }, null, 2);
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify({ name: GDRIVE_FILENAME, mimeType: 'application/json' })], { type: 'application/json' }));
-    form.append('file', new Blob([content], { type: 'application/json' }));
-    const res = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
-      { method: 'PATCH', headers: { Authorization: 'Bearer ' + gAccessToken }, body: form }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const saved = await res.json();
-    gFileId = saved.id || fileId;
-    localStorage.setItem('gdrive_file_id', gFileId);
-    driveSetStatus('Saved to Drive ✓  ' + new Date().toLocaleTimeString(), 'ok');
-  } catch(e) {
-    driveSetStatus('Save failed: ' + e.message, 'err');
-  }
-}
-
-async function driveFindFile() {
-  const search = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name%3D'${GDRIVE_FILENAME}'+and+trashed%3Dfalse&fields=files(id,name,size)&orderBy=modifiedTime+desc`,
-    { headers: { Authorization: 'Bearer ' + gAccessToken } }
-  );
-  const data = await search.json();
-  if (data.files && data.files.length > 0) {
-    const nonEmpty = data.files.find(f => parseInt(f.size || 0) > 0);
-    return nonEmpty ? nonEmpty.id : data.files[0].id;
-  }
-  return null;
-}
-
-async function driveLoad() {
-  if (!gAccessToken) { driveSetStatus('Not signed in', 'err'); return; }
-  driveSetStatus('Loading…');
-  try {
-    // Use cached file ID first, then fall back to search
-    let fileId = gFileId || await driveFindFile();
-    if (!fileId) { driveSetStatus('No backup found. Try saving first!', 'err'); return; }
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      { headers: { Authorization: 'Bearer ' + gAccessToken } }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + res.statusText);
-    const text = await res.text();
-    if (!text || !text.trim()) {
-      // Cached ID points to empty file — try searching instead
-      gFileId = null; localStorage.removeItem('gdrive_file_id');
-      fileId = await driveFindFile();
-      if (!fileId) { driveSetStatus('Drive file is empty. Save first!', 'err'); return; }
+    // Auto-recover from SHA conflict
+    if (res.status === 409 || res.status === 422) {
+      ghFileSha = null;
+      const refetch = await fetch(ghBuildUrl(true), { headers: ghHeaders() });
+      if (refetch.ok) {
+        const d = await refetch.json();
+        ghFileSha = d.sha;
+        body.sha = ghFileSha;
+        res = await fetch(ghBuildUrl(false), {
+          method: 'PUT',
+          headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      }
     }
-    const data = JSON.parse(text || '{}');
-    const incoming = Array.isArray(data) ? data : (data.projects || []);
-    if (!Array.isArray(incoming) || !incoming.length) { driveSetStatus('No projects in Drive file', 'err'); return; }
-    gFileId = fileId; localStorage.setItem('gdrive_file_id', gFileId);
-    const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s) on Drive.\n\nOK → Replace all\nCancel → Merge`);
-    if (replace) { projects = incoming; }
-    else {
-      const ids = new Set(projects.map(p => p.id));
-      projects = [...projects, ...incoming.filter(p => !ids.has(p.id))];
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(ghFriendlyError(res.status, text));
     }
-    render(); save();
-    driveSetStatus('Loaded from Drive ✓  ' + new Date().toLocaleTimeString(), 'ok');
+    const result = await res.json();
+    if (result && result.content && result.content.sha) ghFileSha = result.content.sha;
+    ghSetStatus(`Saved to GitHub ✓ ${new Date().toLocaleTimeString()}`, 'ok');
   } catch(e) {
-    driveSetStatus('Load failed: ' + e.message, 'err');
+    ghSetStatus('Save failed: ' + e.message, 'err');
   }
 }
+
+/* ── Auto-sync hooks ── */
+function ghMaybeAutoLoad() {
+  if (ghIsConfigured() && ghConfig.autoLoad) {
+    setTimeout(() => ghLoad(true), 250);
+  }
+}
+function ghMaybeAutoSave() {
+  if (!ghIsConfigured() || !ghConfig.autoSave) return;
+  // Debounce: push 2s after the last change
+  clearTimeout(ghSaveTimer);
+  ghSaveTimer = setTimeout(() => ghSave(true), 2000);
+}
+
+/* ── Settings modal ── */
+function openGhSettingsModal() {
+  renderGhSettingsModal();
+  document.getElementById('gh-settings-overlay').classList.add('open');
+}
+function closeGhSettingsModal() {
+  document.getElementById('gh-settings-overlay').classList.remove('open');
+}
+
+function renderGhSettingsModal() {
+  const c = ghConfig || {};
+  const modal = document.getElementById('gh-settings-modal');
+  const isConfigured = ghIsConfigured();
+  modal.innerHTML = `
+    <div class="enc-modal-icon">🐙</div>
+    <div class="enc-modal-title">GitHub ${isConfigured ? 'Settings' : 'Setup'}</div>
+    <div class="enc-modal-sub">Sync your projects backup to a private GitHub repo.</div>
+
+    <div class="gh-help">
+      <strong>Need a token?</strong> Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained PAT</a> with <strong>Contents: Read &amp; Write</strong> on your private repo. Or a <a href="https://github.com/settings/tokens/new?scopes=repo&description=Project%20Tracker" target="_blank" rel="noopener">classic token</a> with the <code>repo</code> scope. The token stays in this browser's localStorage only.
+    </div>
+
+    <div class="enc-modal-body">
+      <div class="enc-field">
+        <label for="gh-token">Personal Access Token</label>
+        <input type="password" class="enc-input" id="gh-token" placeholder="ghp_… or github_pat_…" autocomplete="off" value="${esc(c.token || '')}" />
+      </div>
+      <div class="gh-row">
+        <div class="enc-field">
+          <label for="gh-owner">Owner (username / org)</label>
+          <input type="text" class="enc-input" id="gh-owner" placeholder="octocat" autocomplete="off" value="${esc(c.owner || '')}" />
+        </div>
+        <div class="enc-field">
+          <label for="gh-repo">Private Repo Name</label>
+          <input type="text" class="enc-input" id="gh-repo" placeholder="my-data" autocomplete="off" value="${esc(c.repo || '')}" />
+        </div>
+      </div>
+      <div class="gh-row">
+        <div class="enc-field">
+          <label for="gh-path">File Path</label>
+          <input type="text" class="enc-input" id="gh-path" placeholder="projects-backup.json" autocomplete="off" value="${esc(c.path || 'projects-backup.json')}" />
+        </div>
+        <div class="enc-field">
+          <label for="gh-branch">Branch</label>
+          <input type="text" class="enc-input" id="gh-branch" placeholder="main" autocomplete="off" value="${esc(c.branch || 'main')}" />
+        </div>
+      </div>
+      <label class="gh-checkbox-row">
+        <input type="checkbox" id="gh-autoload" ${c.autoLoad ? 'checked' : ''} />
+        Auto-load from GitHub when this page opens
+      </label>
+      <label class="gh-checkbox-row">
+        <input type="checkbox" id="gh-autosave" ${c.autoSave ? 'checked' : ''} />
+        Auto-save to GitHub when projects change
+      </label>
+      <div class="gh-checkbox-sub">Auto-save is debounced — pushes ~2 seconds after the last edit.</div>
+    </div>
+    <div class="enc-error" id="gh-setup-error"></div>
+    <div class="enc-modal-footer">
+      <button class="enc-btn-primary" onclick="saveGhSettings()">Save Settings</button>
+      <button class="enc-btn-secondary" onclick="testGhConnection()">Test Connection</button>
+      ${isConfigured ? '<button class="enc-btn-danger" onclick="clearGhSettings()">🗑 Clear Settings</button>' : ''}
+      <button class="enc-btn-secondary" onclick="closeGhSettingsModal()">Cancel</button>
+    </div>
+    <div class="enc-hint">Your data is private to your repo. If you also enable the 🔒 encryption above, the file pushed to GitHub is encrypted too.</div>
+  `;
+  setTimeout(() => {
+    const focusEl = c.token ? document.getElementById('gh-owner') : document.getElementById('gh-token');
+    if (focusEl) focusEl.focus();
+  }, 180);
+}
+
+function readGhFormConfig() {
+  const token  = document.getElementById('gh-token').value.trim();
+  const owner  = document.getElementById('gh-owner').value.trim();
+  const repo   = document.getElementById('gh-repo').value.trim();
+  const path   = document.getElementById('gh-path').value.trim() || 'projects-backup.json';
+  const branch = document.getElementById('gh-branch').value.trim() || 'main';
+  const autoLoad = document.getElementById('gh-autoload').checked;
+  const autoSave = document.getElementById('gh-autosave').checked;
+  return { token, owner, repo, path, branch, autoLoad, autoSave };
+}
+
+function saveGhSettings() {
+  const err = document.getElementById('gh-setup-error');
+  const cfg = readGhFormConfig();
+  if (!cfg.token || !cfg.owner || !cfg.repo || !cfg.path) {
+    err.textContent = 'Token, owner, repo and path are required.';
+    return;
+  }
+  ghConfig  = cfg;
+  ghPersistConfig();
+  ghFileSha = null; // reset — will refetch on next operation
+  err.textContent = '';
+  closeGhSettingsModal();
+  ghSetStatus('Settings saved ✓', 'ok');
+  setTimeout(() => ghSetStatus(''), 3000);
+}
+
+async function testGhConnection() {
+  const err = document.getElementById('gh-setup-error');
+  const cfg = readGhFormConfig();
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    err.textContent = 'Need token, owner and repo to test.';
+    return;
+  }
+  err.style.color = '';
+  err.textContent = 'Testing…';
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`,
+      { headers: {
+        'Authorization': 'Bearer ' + cfg.token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }}
+    );
+    if (res.status === 401) { err.textContent = '❌ Bad token (401).'; return; }
+    if (res.status === 404) { err.textContent = '❌ Repo not found, or token lacks access (404).'; return; }
+    if (!res.ok) { err.textContent = `❌ HTTP ${res.status}`; return; }
+    const repoInfo = await res.json();
+    err.style.color = '#2da44e';
+    err.textContent = `✓ Connected to ${repoInfo.full_name}${repoInfo.private ? ' (private)' : ' ⚠ PUBLIC — please use a private repo!'}`;
+  } catch(e) {
+    err.textContent = '❌ ' + e.message;
+  }
+}
+
+function clearGhSettings() {
+  if (!confirm('Clear GitHub settings? Your token and config will be removed from this browser.\n\n(Your data on GitHub stays intact.)')) return;
+  ghConfig = null;
+  ghFileSha = null;
+  ghPersistConfig();
+  closeGhSettingsModal();
+  ghSetStatus('Settings cleared.', '');
+  setTimeout(() => ghSetStatus(''), 3000);
+}
+
+// Initialize GitHub config on script load
+ghLoadConfig();
 
 load();
 </script>
