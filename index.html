@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>My Project Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -101,6 +101,55 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   background: var(--pri-high-bg);
 }
 .enc-toggle.active:hover { transform: scale(1.1); }
+
+/* ── Hamburger menu ── */
+.menu-wrap { position: relative; }
+.menu-toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, color .2s;
+  font-size: 18px; line-height: 1;
+}
+.menu-toggle:hover { background: var(--bg); border-color: var(--border-md); color: var(--text); }
+.menu-toggle.open { border-color: var(--accent); color: var(--accent); background: var(--pri-high-bg); }
+.menu-dropdown {
+  position: absolute; top: 50px; right: 0;
+  min-width: 240px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 44px rgba(0,0,0,.20);
+  padding: 8px;
+  z-index: 300;
+  opacity: 0; transform: translateY(-8px) scale(.97);
+  pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.menu-dropdown.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.menu-group-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--hint); padding: 9px 12px 4px;
+}
+.menu-item {
+  width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border: none; background: none;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 500;
+  color: var(--text); border-radius: 10px; cursor: pointer;
+  transition: background .12s;
+}
+.menu-item:hover { background: var(--bg); }
+.menu-item svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--muted); }
+.menu-item.active { color: var(--accent); font-weight: 600; }
+.menu-item.active .mi-icon { color: var(--accent); }
+.menu-item .menu-check { margin-left: auto; opacity: 0; color: var(--accent); }
+.menu-item.active .menu-check { opacity: 1; }
+.menu-sep { height: 1px; background: var(--border); margin: 6px 6px; }
 
 .toolbar { display: flex; gap: 8px; padding: 0 40px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; }
 .toolbar-label { font-size: 12px; color: var(--hint); margin-right: 4px; }
@@ -436,10 +485,282 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   80%      { transform: translateX(5px); }
 }
 
+/* ── Touch drag clone (iPad / touchscreen) ── */
+.touch-clone {
+  position: fixed; z-index: 500; pointer-events: none;
+  opacity: .95; margin: 0 !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,.24);
+  transform: rotate(1.6deg) scale(1.03);
+  border-color: var(--accent) !important;
+}
+/* While a touch-drag is in progress, prevent the page from scrolling under the finger */
+body.touch-dragging { overflow: hidden; touch-action: none; }
+
+/* ── Money Recorder ── */
+.money-section { padding: 0 40px; margin-top: 48px; }
+.money-divider { border: none; border-top: 1.5px solid var(--border); margin: 0 40px 36px; }
+.money-header h2 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; line-height: 1.2; }
+.money-header h2 span { font-style: italic; color: var(--accent); }
+.money-header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+.money-add-bar {
+  display: flex; gap: 10px; margin: 22px 0 24px; align-items: center; flex-wrap: wrap;
+}
+.money-add-bar input[type="text"] {
+  flex: 1; min-width: 180px; padding: 11px 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  outline: none; transition: border-color .15s;
+}
+.money-add-bar input[type="text"]::placeholder { color: var(--hint); }
+.money-add-bar input[type="text"]:focus { border-color: var(--border-md); }
+.money-add-bar input[type="number"] {
+  width: 120px; padding: 11px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  outline: none; transition: border-color .15s; text-align: right;
+}
+.money-add-bar input[type="number"]:focus { border-color: var(--border-md); }
+.money-add-bar input[type="date"] {
+  padding: 10px 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  outline: none; cursor: pointer;
+}
+.money-add-bar input[type="date"]:focus { border-color: var(--border-md); }
+.money-add-bar select {
+  padding: 11px 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  outline: none; cursor: pointer;
+}
+.money-add-bar input.err { border-color: var(--pri-high-t); animation: shake .35s ease; }
+
+/* Segmented income/expense toggle */
+.seg { display: inline-flex; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
+.seg-btn {
+  padding: 11px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--muted); background: var(--surface); border: none; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.seg-btn + .seg-btn { border-left: 1.5px solid var(--border); }
+.seg-btn.active[data-v="out"] { background: var(--pri-high-bg); color: var(--pri-high-t); }
+.seg-btn.active[data-v="in"]  { background: var(--pri-low-bg);  color: var(--pri-low-t);  }
+
+/* Per-currency summary cards */
+.money-summary { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+.money-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 14px 18px; min-width: 150px; display: flex; flex-direction: column; gap: 4px;
+}
+.money-card-cur { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--hint); }
+.money-card-bal { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; }
+.money-card-bal.pos { color: var(--col-done-t); }
+.money-card-bal.neg { color: var(--pri-high-t); }
+.money-card-sub { display: flex; gap: 12px; font-size: 11.5px; margin-top: 2px; }
+.mc-in  { color: var(--col-done-t); }
+.mc-out { color: var(--pri-high-t); }
+
+/* Transaction list */
+.money-list { display: flex; flex-direction: column; gap: 8px; }
+.money-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 11px 14px; transition: border-color .15s, box-shadow .15s;
+}
+.money-row:hover { border-color: var(--border-md); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.money-row-main { flex: 1; min-width: 0; }
+.money-row-desc { font-size: 14px; color: var(--text); word-break: break-word; }
+.money-row-date { font-size: 11.5px; color: var(--hint); margin-top: 2px; }
+.money-row-amt { font-size: 14px; font-weight: 600; white-space: nowrap; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.money-row-amt.pos { color: var(--col-done-t); }
+.money-row-amt.neg { color: var(--pri-high-t); }
+.money-del {
+  background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--hint); font-size: 12px; line-height: 1; padding: 4px 9px; cursor: pointer;
+  flex-shrink: 0; transition: background .12s, border-color .12s, color .12s;
+}
+.money-del:hover { background: var(--pri-high-bg); border-color: var(--pri-high-t); color: var(--pri-high-t); }
+
 @media (max-width: 700px) {
-  header, .add-bar, .board, .stats, .toolbar { padding-left: 18px; padding-right: 18px; }
+  header, .add-bar, .board, .stats, .toolbar, .money-section { padding-left: 18px; padding-right: 18px; }
+  .money-divider { margin-left: 18px; margin-right: 18px; }
   .board { grid-template-columns: 1fr; }
   .header-controls { margin-top: 4px; }
+  .money-add-bar input[type="number"] { width: 100%; }
+  .money-add-bar select, .money-add-bar .seg, .money-add-bar input[type="date"] { flex: 1; }
+}
+
+/* ============================================================
+   REFINEMENT LAYER — warm "almanac" restyle.
+   Appended overrides only: every original selector, class and id
+   above is untouched, so all the app logic keeps working.
+   ============================================================ */
+
+/* ── Palette & tokens: warm parchment + deepened terracotta ── */
+:root{
+  --bg:        #F0E9DA;
+  --surface:   #FCF9F2;
+  --border:    #E4DAC7;
+  --border-md: #CDBFA5;
+  --text:      #2B2620;
+  --muted:     #756A58;
+  --hint:      #A99B83;
+  --accent:    #BD5A2B;
+  --accent-deep:#9C461E;
+  --accent-soft:rgba(189,90,43,.10);
+
+  --col-todo:#E7EAF1; --col-todo-b:#BFC9DF; --col-todo-t:#3D5288;
+  --col-prog:#F6EAD0; --col-prog-b:#E4C684; --col-prog-t:#8A5A12;
+  --col-done:#E5EFE2; --col-done-b:#A6CD9E; --col-done-t:#3F6B3A;
+
+  --pri-high-bg:#F4E1DA; --pri-high-t:#A8412A;
+  --pri-med-bg:#F5E8CD;  --pri-med-t:#8A5A12;
+  --pri-low-bg:#E4EEE1;  --pri-low-t:#3F6B3A;
+
+  --radius:9px; --radius-sm:6px;
+
+  --shadow-card:       0 1px 2px rgba(70,52,28,.05), 0 5px 16px -8px rgba(70,52,28,.12);
+  --shadow-card-hover: 0 2px 4px rgba(70,52,28,.06), 0 16px 30px -12px rgba(70,52,28,.22);
+  --shadow-pop:        0 26px 64px -16px rgba(40,28,12,.34), 0 4px 12px rgba(40,28,12,.10);
+
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  --wash:
+    radial-gradient(1100px 760px at 10% -10%, rgba(255,248,235,.9), transparent 58%),
+    radial-gradient(880px 680px at 112% 116%, rgba(189,90,43,.05), transparent 55%);
+}
+[data-theme="dark"]{
+  --bg:        #16140F;
+  --surface:   #211D15;
+  --border:    #393227;
+  --border-md: #564E3F;
+  --text:      #ECE4D5;
+  --muted:     #9C9080;
+  --hint:      #6E6452;
+  --accent:    #DD7A42;
+  --accent-deep:#B85F2C;
+  --accent-soft:rgba(221,122,66,.12);
+
+  --col-todo:#1D2440; --col-todo-b:#39508A; --col-todo-t:#8FAEF0;
+  --col-prog:#2A2010; --col-prog-b:#6A5010; --col-prog-t:#F0C566;
+  --col-done:#0E2018; --col-done-b:#1F5C38; --col-done-t:#62DDA2;
+
+  --pri-high-bg:#2E1210; --pri-high-t:#F08A78;
+  --pri-med-bg:#2A2010;  --pri-med-t:#F0C566;
+  --pri-low-bg:#0E2018;  --pri-low-t:#62DDA2;
+
+  --shadow-card:       0 1px 2px rgba(0,0,0,.30), 0 6px 18px -8px rgba(0,0,0,.55);
+  --shadow-card-hover: 0 2px 5px rgba(0,0,0,.35), 0 18px 34px -12px rgba(0,0,0,.65);
+  --shadow-pop:        0 26px 64px -16px rgba(0,0,0,.70), 0 4px 12px rgba(0,0,0,.40);
+
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  --wash:
+    radial-gradient(1100px 760px at 10% -10%, rgba(70,60,46,.55), transparent 58%),
+    radial-gradient(880px 680px at 112% 116%, rgba(221,122,66,.07), transparent 55%);
+}
+
+/* ── Paper background: faint warm wash + a real grain tooth ── */
+body{
+  background-color: var(--bg);
+  background-image: var(--grain), var(--wash);
+  background-attachment: fixed;
+  background-repeat: repeat, no-repeat;
+}
+
+/* ── Masthead: bigger optical serif + a hairline rule ── */
+header{
+  padding: 44px 40px 22px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+header h1{
+  font-size: clamp(34px, 4.4vw, 44px);
+  line-height: 1.04;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+header h1 span{ font-weight: 500; }
+header p{ letter-spacing: .005em; }
+.theme-toggle, .enc-toggle, .menu-toggle{ box-shadow: 0 1px 2px rgba(70,52,28,.05); }
+
+/* ── Column headers as printed section rules (no candy pills) ── */
+.col-head{
+  background: transparent;
+  padding: 0 3px 9px;
+  margin-bottom: 14px;
+  border-radius: 0;
+  border-bottom: 2px solid var(--border-md);
+  align-items: baseline;
+}
+.col-head-todo{ background: transparent; border-bottom-color: var(--col-todo-b); }
+.col-head-prog{ background: transparent; border-bottom-color: var(--col-prog-b); }
+.col-head-done{ background: transparent; border-bottom-color: var(--col-done-b); }
+.col-label{ font-size: 12.5px; letter-spacing: .12em; }
+
+/* ── Cards: sheets of paper lifted off the page ── */
+.card{
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  transition: border-color .15s, box-shadow .2s, transform .15s, opacity .15s;
+}
+.card:hover{
+  border-color: var(--border-md);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+.card.dragging{ transform: none; }
+.touch-clone{ transition: none !important; }
+.empty{ border-radius: var(--radius); }
+.pri-badge{ letter-spacing: .02em; }
+
+/* ── Primary buttons: a little dimensional weight ── */
+.add-btn, .modal-save, .enc-btn-primary{
+  background: linear-gradient(178deg, var(--accent), var(--accent-deep));
+  box-shadow: 0 1px 2px rgba(60,30,10,.18), 0 8px 18px -10px rgba(189,90,43,.65);
+}
+.add-btn:hover, .modal-save:hover, .enc-btn-primary:hover{ opacity: 1; filter: brightness(1.06); }
+.add-btn:active, .modal-save:active, .enc-btn-primary:active{ transform: translateY(1px) scale(.995); }
+
+/* ── Inputs: a deliberate focus ring instead of a quiet border ── */
+.add-bar input[type="text"]:focus,
+.add-bar select:focus,
+.desc-textarea:focus,
+.check-add-input:focus,
+.enc-input:focus,
+.modal-pri:focus,
+.money-add-bar input[type="text"]:focus,
+.money-add-bar input[type="number"]:focus,
+.money-add-bar input[type="date"]:focus,
+.money-add-bar select:focus{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ── Floating surfaces: warmer, softer shadow ── */
+.menu-dropdown{ box-shadow: var(--shadow-pop); border-radius: 14px; }
+.modal, .enc-modal{ box-shadow: var(--shadow-pop); }
+
+/* ── Money view: match the paper-card depth ── */
+.money-card, .money-row{ box-shadow: var(--shadow-card); }
+.money-row:hover{ box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+.money-card-bal{ letter-spacing: -0.01em; }
+
+/* ── Menu dropdown: keep it above the toolbar/content beneath the header so the
+     lower "Money Recorder" item is always clickable (it was overlapping the
+     toolbar row on wide screens, which stole the click). ── */
+.header-controls{ position: relative; z-index: 60; }
+.menu-dropdown{ z-index: 1000; }
+.menu-item{ padding-top: 11px; padding-bottom: 11px; }
+
+/* ── Consistent entrance: whichever view is shown animates the same way, every
+     time it's shown (driven by switchView), so My Projects and Money Recorder
+     reveal identically. Motion-safe only — defaults stay fully visible. ── */
+@media (prefers-reduced-motion: no-preference){
+  @keyframes riseIn{
+    from{ opacity: 0; transform: translateY(12px); }
+    to{ opacity: 1; transform: none; }
+  }
+  header{ animation: riseIn .6s cubic-bezier(.2,.7,.2,1) both; }
+  .toolbar{ animation: riseIn .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: .06s; }
+  .view-enter{ animation: riseIn .5s cubic-bezier(.2,.7,.2,1) both; }
 }
 </style>
 </head>
@@ -447,12 +768,28 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
 
 <header>
   <div class="header-text">
-    <h1>My <span>Projects</span></h1>
-    <p>Drag cards between columns · Click a card title to add notes &amp; to-dos</p>
+    <h1 id="app-title">My <span>Projects</span></h1>
+    <p id="app-subtitle">Drag cards between columns · Click a card title to add notes &amp; to-dos</p>
   </div>
   <div class="header-controls">
     <button class="enc-toggle" id="enc-toggle-btn" onclick="openEncModal()" title="Encryption settings" aria-label="Encryption settings">🔓</button>
     <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+    <div class="menu-wrap">
+      <button class="menu-toggle" id="menu-toggle-btn" onclick="toggleMenu(event)" title="Menu" aria-label="Open menu" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div class="menu-dropdown" id="menu-dropdown" role="menu">
+        <div class="menu-group-label">View</div>
+        <button class="menu-item" role="menuitem" id="view-projects-item" onclick="switchView('projects')">
+          <svg class="mi-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="3.4" height="11" rx="1"/><rect x="6.3" y="2.5" width="3.4" height="11" rx="1"/><rect x="10.6" y="2.5" width="3.4" height="11" rx="1"/></svg>
+          My Projects
+          <svg class="menu-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
+        </button>
+        <button class="menu-item" role="menuitem" id="view-money-item" onclick="switchView('money')">
+          <svg class="mi-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5v7M9.8 6.2C9.4 5.5 8.8 5.2 8 5.2c-1 0-1.7.5-1.7 1.3 0 2 3.6 1 3.6 3 0 .9-.8 1.4-1.9 1.4-.9 0-1.5-.3-1.9-1"/></svg>
+          Money Recorder
+          <svg class="menu-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -539,6 +876,41 @@ header p { margin-top: 6px; font-size: 14px; color: var(--muted); }
   </div>
 </div>
 
+<!-- ════════ Money Recorder ════════ -->
+<hr class="money-divider" />
+<section class="money-section">
+  <div class="money-header">
+    <h2>Money <span>Recorder</span></h2>
+    <p>Track income &amp; expenses in any currency · saved, synced &amp; encrypted alongside your projects</p>
+  </div>
+  <div class="money-add-bar">
+    <input type="text" id="txn-desc" placeholder="What's it for? (e.g. Groceries, Salary)" autocomplete="off" />
+    <input type="number" id="txn-amt" placeholder="0.00" step="0.01" min="0" inputmode="decimal" />
+    <select id="txn-cur" aria-label="Currency">
+      <option value="TWD">TWD NT$</option>
+      <option value="USD">USD $</option>
+      <option value="EUR">EUR €</option>
+      <option value="JPY">JPY ¥</option>
+      <option value="GBP">GBP £</option>
+      <option value="CNY">CNY ¥</option>
+      <option value="KRW">KRW ₩</option>
+      <option value="HKD">HKD $</option>
+      <option value="SGD">SGD $</option>
+      <option value="AUD">AUD $</option>
+      <option value="CAD">CAD $</option>
+    </select>
+    <div class="seg" id="txn-type-seg">
+      <button type="button" class="seg-btn active" data-v="out" onclick="setTxnType('out')">Expense</button>
+      <button type="button" class="seg-btn" data-v="in" onclick="setTxnType('in')">Income</button>
+    </div>
+    <input type="hidden" id="txn-type" value="out" />
+    <input type="date" id="txn-date" aria-label="Date" />
+    <button class="add-btn" onclick="addTxn()">+ Record</button>
+  </div>
+  <div class="money-summary" id="money-summary"></div>
+  <div class="money-list" id="money-list"></div>
+</section>
+
 <!-- Project detail modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
   <div class="modal">
@@ -615,8 +987,38 @@ const EMPTY_MSG   = [
 ];
 
 let projects = [];
+let txns     = [];   // money recorder entries: { id, desc, amount, currency, type:'in'|'out', date }
 let dragId   = null;
 let activeId = null;
+
+/* ── Shared state serialization (projects + money) ── */
+function buildPayload() {
+  return { exported: new Date().toISOString(), version: 2, projects, txns };
+}
+function extractState(obj) {
+  // Accepts a bare array (legacy = projects only) or a { projects, txns } object
+  if (Array.isArray(obj)) return { projects: obj, txns: [] };
+  return {
+    projects: Array.isArray(obj && obj.projects) ? obj.projects : [],
+    txns:     Array.isArray(obj && obj.txns)     ? obj.txns     : []
+  };
+}
+function applyState(obj) {
+  const s = extractState(obj);
+  projects = s.projects;
+  txns     = s.txns;
+}
+function applyIncomingState(state, replace) {
+  if (replace) {
+    projects = state.projects;
+    txns     = state.txns;
+  } else {
+    const pids = new Set(projects.map(p => p.id));
+    projects = [...projects, ...state.projects.filter(p => !pids.has(p.id))];
+    const tids = new Set(txns.map(t => t.id));
+    txns = [...txns, ...state.txns.filter(t => !tids.has(t.id))];
+  }
+}
 
 /* ══════════════════════════════════════════════════
    ── Encryption Engine (Web Crypto API) ──
@@ -709,10 +1111,11 @@ async function load() {
     }
     // Fall back to plaintext store
     const r = localStorage.getItem(STORAGE_KEY);
-    projects = r ? JSON.parse(r) : [];
-  } catch(e) { projects = []; }
+    applyState(r ? JSON.parse(r) : []);
+  } catch(e) { projects = []; txns = []; }
   updateEncToggleUI();
   render();
+  renderMoney();
   if (typeof ghMaybeAutoLoad === 'function') ghMaybeAutoLoad();
 }
 
@@ -722,11 +1125,11 @@ async function load() {
 async function saveLocalOnly() {
   try {
     if (sessionPasswordCache) {
-      const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, sessionPasswordCache);
+      const payload = await encryptJSON(buildPayload(), sessionPasswordCache);
       localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
       localStorage.removeItem(STORAGE_KEY); // ensure no plaintext copy lingers
     } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
       localStorage.removeItem(ENC_STORAGE_KEY);
     }
   } catch(e) {}
@@ -765,10 +1168,11 @@ async function submitUnlock() {
   try {
     const payload = btn._payload;
     const data = await decryptJSON(payload, pw);
-    projects = Array.isArray(data) ? data : (data.projects || []);
+    applyState(data);
     sessionPasswordCache = pw;
     document.getElementById('unlock-overlay').classList.remove('open');
     render();
+    renderMoney();
     updateEncToggleUI();
     if (typeof ghMaybeAutoLoad === 'function') ghMaybeAutoLoad();
   } catch(e) {
@@ -877,7 +1281,7 @@ async function enableEncryption() {
   err.textContent = '';
 
   try {
-    const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, pw1);
+    const payload = await encryptJSON(buildPayload(), pw1);
     localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
     localStorage.removeItem(STORAGE_KEY);
     sessionPasswordCache = pw1;
@@ -912,7 +1316,7 @@ async function changePassword() {
   if (newPw1 && newPw1.length < 6) { err.textContent = 'New password must be at least 6 characters.'; return; }
 
   try {
-    const payload = await encryptJSON({ exported: new Date().toISOString(), version: 1, projects }, usePw);
+    const payload = await encryptJSON(buildPayload(), usePw);
     localStorage.setItem(ENC_STORAGE_KEY, JSON.stringify(payload));
     sessionPasswordCache = usePw;
     closeEncModal();
@@ -939,7 +1343,7 @@ async function removeEncryption() {
 
   if (!confirm('Remove encryption? Your data will be stored as plain text.\n\nAnyone with access to your browser can read it.')) return;
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
   localStorage.removeItem(ENC_STORAGE_KEY);
   sessionPasswordCache = null;
   closeEncModal();
@@ -1022,6 +1426,127 @@ function del(id) {
   render(); save();
 }
 
+/* ══════════════════════════════════════════
+   ── Money Recorder ──
+   ══════════════════════════════════════════ */
+function setTxnType(v) {
+  document.getElementById('txn-type').value = v;
+  document.querySelectorAll('#txn-type-seg .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === v);
+  });
+}
+
+function fmtMoney(amt, cur) {
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur || 'USD' }).format(amt);
+  } catch(e) {
+    return (cur ? cur + ' ' : '') + (Math.round(amt * 100) / 100).toLocaleString();
+  }
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderMoney() {
+  // Per-currency totals
+  const totals = {}; // cur -> { in, out }
+  txns.forEach(t => {
+    const c = t.currency || 'USD';
+    if (!totals[c]) totals[c] = { in: 0, out: 0 };
+    if (t.type === 'in') totals[c].in += t.amount;
+    else totals[c].out += t.amount;
+  });
+
+  const summary = document.getElementById('money-summary');
+  const curs = Object.keys(totals);
+  if (!curs.length) {
+    summary.innerHTML = '';
+  } else {
+    summary.innerHTML = curs.map(c => {
+      const bal = totals[c].in - totals[c].out;
+      const balClass = bal < 0 ? 'neg' : 'pos';
+      return `
+        <div class="money-card">
+          <div class="money-card-cur">${esc(c)}</div>
+          <div class="money-card-bal ${balClass}">${esc(fmtMoney(bal, c))}</div>
+          <div class="money-card-sub">
+            <span class="mc-in">▲ ${esc(fmtMoney(totals[c].in, c))}</span>
+            <span class="mc-out">▼ ${esc(fmtMoney(totals[c].out, c))}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  const list = document.getElementById('money-list');
+  if (!txns.length) {
+    list.innerHTML = `<div class="empty">No transactions yet.<br>Record your first income or expense above!</div>`;
+    return;
+  }
+  const sorted = [...txns].sort((a, b) => new Date(b.date) - new Date(a.date));
+  list.innerHTML = sorted.map(t => {
+    const isIn = t.type === 'in';
+    const sign = isIn ? '+' : '−';
+    const cls  = isIn ? 'pos' : 'neg';
+    return `
+      <div class="money-row">
+        <div class="money-row-main">
+          <div class="money-row-desc">${esc(t.desc || (isIn ? 'Income' : 'Expense'))}</div>
+          <div class="money-row-date">${esc(fmtDate(t.date))}</div>
+        </div>
+        <div class="money-row-amt ${cls}">${sign} ${esc(fmtMoney(t.amount, t.currency))}</div>
+        <button class="money-del" onclick="delTxn('${esc(t.id)}')" title="Delete">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function addTxn() {
+  const descEl = document.getElementById('txn-desc');
+  const amtEl  = document.getElementById('txn-amt');
+  const cur    = document.getElementById('txn-cur').value;
+  const type   = document.getElementById('txn-type').value === 'in' ? 'in' : 'out';
+  const dateEl = document.getElementById('txn-date');
+
+  const amt = parseFloat(amtEl.value);
+  if (isNaN(amt) || amt <= 0) {
+    amtEl.focus();
+    amtEl.classList.add('err');
+    setTimeout(() => amtEl.classList.remove('err'), 500);
+    return;
+  }
+  let date;
+  if (dateEl.value) {
+    const d = new Date(dateEl.value + 'T00:00:00');
+    date = isNaN(d) ? new Date().toISOString() : d.toISOString();
+  } else {
+    date = new Date().toISOString();
+  }
+
+  txns.push({
+    id: uid(),
+    desc: descEl.value.trim(),
+    amount: Math.abs(amt),
+    currency: cur,
+    type,
+    date
+  });
+  try { localStorage.setItem('last_currency', cur); } catch(e) {}
+
+  descEl.value = '';
+  amtEl.value  = '';
+  renderMoney();
+  save();
+  descEl.focus();
+}
+
+function delTxn(id) {
+  if (!confirm('Delete this transaction?')) return;
+  txns = txns.filter(t => t.id !== id);
+  renderMoney();
+  save();
+}
+
 /* ── Drag & Drop ── */
 let dropTarget = null;
 
@@ -1081,6 +1606,141 @@ function onDrop(e, col) {
   dragId = null; dropTarget = null;
   render(); save();
 }
+
+/* ── Touch Drag & Drop (iPad / phones) ──
+   HTML5 drag events don't fire on touchscreens, so we implement a
+   long-press-to-drag gesture that coexists with tapping & scrolling. */
+const touchDrag = {
+  active: false, id: null, clone: null,
+  startX: 0, startY: 0, offsetX: 0, offsetY: 0,
+  holdTimer: null, col: null
+};
+const TD_HOLD_MS = 200;   // long-press duration before drag begins
+const TD_MOVE_TOL = 10;   // px of movement that cancels the hold (= a scroll)
+
+function tdReset() {
+  clearTimeout(touchDrag.holdTimer);
+  if (touchDrag.clone && touchDrag.clone.parentNode) touchDrag.clone.parentNode.removeChild(touchDrag.clone);
+  if (touchDrag.id) { const el = document.getElementById('card-' + touchDrag.id); if (el) el.classList.remove('dragging'); }
+  clearIndicators();
+  document.body.classList.remove('touch-dragging');
+  touchDrag.active = false; touchDrag.id = null; touchDrag.clone = null;
+  touchDrag.holdTimer = null; touchDrag.col = null;
+  dragId = null; dropTarget = null;
+}
+
+function tdBeginDrag() {
+  const orig = document.getElementById('card-' + touchDrag.id);
+  if (!orig) { tdReset(); return; }
+  touchDrag.active = true;
+  dragId = touchDrag.id;
+  const rect = orig.getBoundingClientRect();
+  const clone = orig.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.add('touch-clone');
+  clone.style.width = rect.width + 'px';
+  clone.style.left = (touchDrag.startX - touchDrag.offsetX) + 'px';
+  clone.style.top  = (touchDrag.startY - touchDrag.offsetY) + 'px';
+  document.body.appendChild(clone);
+  touchDrag.clone = clone;
+  orig.classList.add('dragging');
+  document.body.classList.add('touch-dragging');
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e) {} }
+}
+
+function onTouchStart(e) {
+  if (e.touches.length !== 1) return;
+  const card = e.target.closest('.card');
+  if (!card || !card.id.startsWith('card-')) return;
+  // Don't start a drag from the action buttons — let them tap normally
+  if (e.target.closest('.card-actions')) return;
+  const t = e.touches[0];
+  const rect = card.getBoundingClientRect();
+  touchDrag.id = card.id.replace('card-', '');
+  touchDrag.startX = t.clientX; touchDrag.startY = t.clientY;
+  touchDrag.offsetX = t.clientX - rect.left;
+  touchDrag.offsetY = t.clientY - rect.top;
+  clearTimeout(touchDrag.holdTimer);
+  touchDrag.holdTimer = setTimeout(tdBeginDrag, TD_HOLD_MS);
+}
+
+function onTouchMove(e) {
+  if (!touchDrag.active) {
+    // Still in hold window — if the finger moves too far, treat as a scroll and cancel
+    if (touchDrag.holdTimer && e.touches.length === 1) {
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - touchDrag.startX) > TD_MOVE_TOL ||
+          Math.abs(t.clientY - touchDrag.startY) > TD_MOVE_TOL) {
+        clearTimeout(touchDrag.holdTimer);
+        touchDrag.holdTimer = null;
+        touchDrag.id = null;
+      }
+    }
+    return;
+  }
+  e.preventDefault(); // we own the gesture now
+  const t = e.touches[0];
+  // Move the floating clone
+  touchDrag.clone.style.left = (t.clientX - touchDrag.offsetX) + 'px';
+  touchDrag.clone.style.top  = (t.clientY - touchDrag.offsetY) + 'px';
+  // Figure out what's under the finger (hide clone so it isn't the hit target)
+  touchDrag.clone.style.display = 'none';
+  const under = document.elementFromPoint(t.clientX, t.clientY);
+  touchDrag.clone.style.display = '';
+  clearIndicators();
+  if (!under) { touchDrag.col = null; dropTarget = null; return; }
+  const list = under.closest('.card-list');
+  if (!list) { touchDrag.col = null; dropTarget = null; return; }
+  const col = parseInt(list.id.replace('col-', ''), 10);
+  touchDrag.col = col;
+  list.classList.add('drag-over');
+  const overCard = under.closest('.card');
+  if (overCard && overCard.id !== 'card-' + dragId) {
+    const r = overCard.getBoundingClientRect();
+    const pos = t.clientY < r.top + r.height / 2 ? 'before' : 'after';
+    overCard.classList.add('drop-' + pos);
+    dropTarget = { cardId: overCard.id.replace('card-', ''), pos };
+  } else {
+    dropTarget = null;
+  }
+}
+
+function onTouchEnd(e) {
+  clearTimeout(touchDrag.holdTimer);
+  touchDrag.holdTimer = null;
+  if (!touchDrag.active) {
+    // No drag happened → it was a tap; let the normal click handlers fire
+    touchDrag.id = null;
+    return;
+  }
+  e.preventDefault();
+  performTouchDrop(touchDrag.col);
+  tdReset();
+}
+
+function performTouchDrop(col) {
+  if (!dragId || col === null || col === undefined) return;
+  const dragIdx = projects.findIndex(x => x.id === dragId);
+  if (dragIdx === -1) return;
+  const [dragged] = projects.splice(dragIdx, 1);
+  dragged.col = col;
+  if (dropTarget && dropTarget.cardId) {
+    const targetIdx = projects.findIndex(x => x.id === dropTarget.cardId);
+    if (targetIdx !== -1) {
+      projects.splice(dropTarget.pos === 'before' ? targetIdx : targetIdx + 1, 0, dragged);
+    } else { projects.push(dragged); }
+  } else {
+    const lastInCol = projects.reduce((acc, p, i) => p.col === col ? i : acc, -1);
+    projects.splice(lastInCol + 1, 0, dragged);
+  }
+  render(); save();
+}
+
+// Event delegation on document (cards are re-rendered constantly)
+document.addEventListener('touchstart', onTouchStart, { passive: true });
+document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+document.addEventListener('touchend',   onTouchEnd,   { passive: false });
+document.addEventListener('touchcancel', tdReset,     { passive: true });
 
 /* ── Project detail Modal ── */
 function openModal(id) {
@@ -1143,7 +1803,7 @@ function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollH
 /* ── Export / Import (encryption-aware) ── */
 async function exportData() {
   let content;
-  const payload = { exported: new Date().toISOString(), version: 1, projects };
+  const payload = buildPayload();
   if (sessionPasswordCache) {
     // Export as encrypted JSON
     const encPayload = await encryptJSON(payload, sessionPasswordCache);
@@ -1175,39 +1835,57 @@ function importData(event) {
         if (pw === null) return;
         try {
           const decrypted = await decryptJSON(raw, pw);
-          const incoming = Array.isArray(decrypted) ? decrypted : (decrypted.projects || []);
-          mergeImport(incoming);
+          mergeImport(extractState(decrypted));
         } catch(err) {
           alert('Wrong password or corrupted file. Could not decrypt.');
         }
       } else {
-        const incoming = Array.isArray(raw) ? raw : (raw.projects || []);
-        if (!Array.isArray(incoming)) throw new Error();
-        mergeImport(incoming);
+        mergeImport(extractState(raw));
       }
     } catch(err) { alert('Could not read the file. Make sure it\'s a valid backup.'); }
   };
   reader.readAsText(file);
 }
 
-function mergeImport(incoming) {
-  if (!incoming.length) { alert('No projects found in this file.'); return; }
-  const replace = projects.length === 0 || confirm(`Found ${incoming.length} project(s).\n\nOK → Replace all current projects\nCancel → Merge with current projects`);
-  if (replace) { projects = incoming; }
-  else {
-    const ids = new Set(projects.map(p => p.id));
-    const added = incoming.filter(p => !ids.has(p.id));
-    projects = [...projects, ...added];
-    alert(`Merged! Added ${added.length} new project(s).`);
+function mergeImport(state) {
+  const incomingCount = state.projects.length + state.txns.length;
+  if (!incomingCount) { alert('No data found in this file.'); return; }
+  const hasExisting = projects.length > 0 || txns.length > 0;
+  const replace = !hasExisting || confirm(
+    `Found ${state.projects.length} project(s) and ${state.txns.length} transaction(s).\n\nOK → Replace all current data\nCancel → Merge with current data`
+  );
+  const beforeP = projects.length, beforeT = txns.length;
+  applyIncomingState(state, replace);
+  if (!replace) {
+    alert(`Merged! Added ${projects.length - beforeP} project(s) and ${txns.length - beforeT} transaction(s).`);
   }
-  render(); save();
+  render(); renderMoney(); save();
 }
 
 /* ── Keyboard shortcuts ── */
 document.getElementById('proj-input').addEventListener('keydown', e => { if (e.key === 'Enter') addProject(); });
 document.getElementById('check-input').addEventListener('keydown', e => { if (e.key === 'Enter') addCheckItem(); });
+
+/* ── Money recorder init ── */
+document.getElementById('txn-desc').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('txn-amt').focus(); } });
+document.getElementById('txn-amt').addEventListener('keydown', e => { if (e.key === 'Enter') addTxn(); });
+(function initMoney() {
+  // Default the date picker to today (YYYY-MM-DD in local time)
+  const d = new Date();
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  document.getElementById('txn-date').value = local;
+  // Restore last-used currency
+  try {
+    const lc = localStorage.getItem('last_currency');
+    if (lc) {
+      const sel = document.getElementById('txn-cur');
+      if ([...sel.options].some(o => o.value === lc)) sel.value = lc;
+    }
+  } catch(e) {}
+})();
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    closeMenu();
     if (activeId) saveModal();
     if (document.getElementById('enc-settings-overlay').classList.contains('open')) closeEncModal();
     if (document.getElementById('gh-settings-overlay').classList.contains('open')) closeGhSettingsModal();
@@ -1232,6 +1910,83 @@ function applyTheme(dark) {
   document.getElementById('theme-toggle-btn').textContent = dark ? '☀️' : '🌙';
   document.getElementById('theme-toggle-btn').title = dark ? 'Switch to light mode' : 'Switch to dark mode';
 }
+
+/* ── Header menu (hamburger) ── */
+function toggleMenu(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById('menu-dropdown');
+  const btn = document.getElementById('menu-toggle-btn');
+  const open = dd.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function closeMenu() {
+  const dd = document.getElementById('menu-dropdown');
+  if (!dd || !dd.classList.contains('open')) return;
+  dd.classList.remove('open');
+  const btn = document.getElementById('menu-toggle-btn');
+  btn.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+}
+// Close the menu when clicking/tapping outside of it
+document.addEventListener('click', e => { if (!e.target.closest('.menu-wrap')) closeMenu(); });
+
+/* ── View switching: My Projects ⇄ Money Recorder ── */
+let currentView = 'projects';
+const VIEW_META = {
+  projects: { title: 'My <span>Projects</span>', sub: 'Drag cards between columns · Click a card title to add notes &amp; to-dos' },
+  money:    { title: 'Money <span>Recorder</span>', sub: 'Track income &amp; expenses in any currency · saved, synced &amp; encrypted with your projects' }
+};
+function switchView(v) {
+  currentView = (v === 'money') ? 'money' : 'projects';
+  const showMoney = currentView === 'money';
+
+  // Projects-only elements
+  const stats = document.querySelector('.stats');
+  const addBar = document.querySelector('.add-bar');
+  const board = document.querySelector('.board');
+  if (stats)  stats.style.display  = showMoney ? 'none' : '';
+  if (addBar) addBar.style.display = showMoney ? 'none' : '';
+  if (board)  board.style.display  = showMoney ? 'none' : '';
+
+  // Money-only elements (the section's own header is redundant now that the
+  // page header changes, so hide it; the divider is no longer needed either)
+  const divider = document.querySelector('.money-divider');
+  const moneySec = document.querySelector('.money-section');
+  const moneyHdr = document.querySelector('.money-header');
+  if (divider)  divider.style.display  = 'none';
+  if (moneyHdr) moneyHdr.style.display = 'none';
+  if (moneySec) moneySec.style.display = showMoney ? '' : 'none';
+
+  // Update page header text
+  const meta = VIEW_META[currentView];
+  document.getElementById('app-title').innerHTML = meta.title;
+  document.getElementById('app-subtitle').innerHTML = meta.sub;
+
+  // Reflect active item in the menu
+  document.getElementById('view-projects-item').classList.toggle('active', !showMoney);
+  document.getElementById('view-money-item').classList.toggle('active', showMoney);
+
+  // Re-trigger a consistent entrance animation for whichever view is now visible,
+  // so switching either direction (and the initial load) animates identically.
+  if (showMoney) {
+    animateViewIn(moneySec);
+  } else {
+    animateViewIn(stats); animateViewIn(addBar); animateViewIn(board);
+  }
+
+  try { localStorage.setItem('current_view', currentView); } catch(e) {}
+  closeMenu();
+}
+
+/* Restart the .view-enter animation on an element (used by switchView) */
+function animateViewIn(el){
+  if (!el) return;
+  el.classList.remove('view-enter');
+  void el.offsetWidth;            // force reflow so the animation runs again
+  el.classList.add('view-enter');
+}
+
 function toggleTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = !isDark;
@@ -1343,43 +2098,40 @@ async function ghLoad(silent = false) {
       if (sessionPasswordCache) {
         try {
           const dec = await decryptJSON(parsed, sessionPasswordCache);
-          const incoming = Array.isArray(dec) ? dec : (dec.projects || []);
-          return ghApplyIncoming(incoming, silent);
+          return ghApplyIncoming(extractState(dec), silent);
         } catch(e) { /* fall through to prompt */ }
       }
       const pw = prompt('The GitHub backup is encrypted. Enter the password to load:');
       if (pw === null) { ghSetStatus('Load cancelled.', ''); return; }
       try {
         const dec = await decryptJSON(parsed, pw);
-        const incoming = Array.isArray(dec) ? dec : (dec.projects || []);
         sessionPasswordCache = pw;
-        ghApplyIncoming(incoming, silent);
+        ghApplyIncoming(extractState(dec), silent);
       } catch(e) {
         ghSetStatus('Wrong password — could not decrypt remote file.', 'err');
       }
     } else {
-      const incoming = Array.isArray(parsed) ? parsed : (parsed.projects || []);
-      ghApplyIncoming(incoming, silent);
+      ghApplyIncoming(extractState(parsed), silent);
     }
   } catch(e) {
     ghSetStatus('Load failed: ' + e.message, 'err');
   }
 }
 
-function ghApplyIncoming(incoming, silent) {
-  if (!Array.isArray(incoming)) { ghSetStatus('Remote file has no projects array.', 'err'); return; }
+function ghApplyIncoming(state, silent) {
+  if (!state || (!Array.isArray(state.projects) && !Array.isArray(state.txns))) {
+    ghSetStatus('Remote file has no usable data.', 'err'); return;
+  }
+  const total = state.projects.length + state.txns.length;
   let replace = true;
-  if (!silent && projects.length > 0) {
-    replace = confirm(`Found ${incoming.length} project(s) on GitHub.\n\nOK → Replace all current projects\nCancel → Merge with current`);
+  if (!silent && (projects.length > 0 || txns.length > 0)) {
+    replace = confirm(`Found ${state.projects.length} project(s) and ${state.txns.length} transaction(s) on GitHub.\n\nOK → Replace all current data\nCancel → Merge with current`);
   }
-  if (replace) { projects = incoming; }
-  else {
-    const ids = new Set(projects.map(p => p.id));
-    projects = [...projects, ...incoming.filter(p => !ids.has(p.id))];
-  }
+  applyIncomingState(state, replace);
   render();
+  renderMoney();
   saveLocalOnly(); // save to localStorage but DON'T trigger auto-sync back to GitHub
-  ghSetStatus(`Loaded ${incoming.length} project(s) from GitHub ✓ ${new Date().toLocaleTimeString()}`, 'ok');
+  ghSetStatus(`Loaded ${total} item(s) from GitHub ✓ ${new Date().toLocaleTimeString()}`, 'ok');
 }
 
 /* ── Save to GitHub ── */
@@ -1393,7 +2145,7 @@ async function ghSave(silent = false) {
   // Build content (encrypt if local encryption is on)
   let content;
   try {
-    const payload = { exported: new Date().toISOString(), version: 1, projects };
+    const payload = buildPayload();
     if (sessionPasswordCache) {
       const enc = await encryptJSON(payload, sessionPasswordCache);
       content = JSON.stringify(enc, null, 2);
@@ -1611,6 +2363,13 @@ function clearGhSettings() {
 ghLoadConfig();
 
 load();
+
+// Restore last-used view (defaults to My Projects)
+(function initView() {
+  let v = 'projects';
+  try { v = localStorage.getItem('current_view') || 'projects'; } catch(e) {}
+  switchView(v);
+})();
 </script>
 </body>
 </html>
