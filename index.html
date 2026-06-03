@@ -762,6 +762,251 @@ header p{ letter-spacing: .005em; }
   .toolbar{ animation: riseIn .6s cubic-bezier(.2,.7,.2,1) both; animation-delay: .06s; }
   .view-enter{ animation: riseIn .5s cubic-bezier(.2,.7,.2,1) both; }
 }
+
+/* ============================================================
+   FINANCIAL STATEMENT VIEW
+   ============================================================ */
+.stmt-section{ padding: 0 40px; max-width: 1100px; }
+
+/* ── Combined money view (ledger + statement on one page) ── */
+.money-section{ max-width: 1100px; }
+.combined-first{ border-top: none; padding-top: 0; margin-top: 4px; }
+/* Cap the transaction history so the statement below stays reachable */
+.money-list{ max-height: 460px; overflow-y: auto; overscroll-behavior: contain; }
+.money-list::-webkit-scrollbar{ width: 9px; }
+.money-list::-webkit-scrollbar-thumb{ background: var(--border-md); border-radius: 99px; border: 2px solid var(--surface); }
+.money-list::-webkit-scrollbar-track{ background: transparent; }
+
+/* Inline category select on each money row */
+.money-cat-sel{
+  flex-shrink: 0; max-width: 130px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11.5px; font-weight: 500;
+  color: var(--muted); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: 99px;
+  padding: 4px 8px; cursor: pointer; outline: none;
+  transition: border-color .12s, color .12s;
+}
+.money-cat-sel:hover{ border-color: var(--border-md); color: var(--text); }
+.money-cat-sel:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.money-cat-sel.is-in{ color: var(--col-done-t); }
+
+/* Controls: month nav + base currency */
+.stmt-controls{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 22px;
+}
+.stmt-monthnav{ display: flex; align-items: center; gap: 8px; }
+.stmt-navbtn{
+  width: 36px; height: 36px; flex-shrink: 0;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--muted);
+  border-radius: 50%; cursor: pointer; font-size: 13px; line-height: 1;
+  transition: background .12s, border-color .12s, color .12s, transform .1s;
+}
+.stmt-navbtn:hover{ background: var(--bg); border-color: var(--accent); color: var(--accent); }
+.stmt-navbtn:active{ transform: scale(.92); }
+#stmt-month{
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; outline: none; transition: border-color .15s;
+}
+#stmt-month:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.stmt-basewrap{ display: flex; align-items: center; gap: 8px; }
+.stmt-baselabel{ font-size: 12px; color: var(--hint); }
+#stmt-base{
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; outline: none; cursor: pointer; transition: border-color .15s;
+}
+#stmt-base:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* Freedom meter — the hero of the sheet */
+.stmt-freedom{
+  background:
+    linear-gradient(180deg, var(--surface), var(--surface)) padding-box,
+    var(--surface);
+  border: 1.5px solid var(--border-md); border-radius: 14px;
+  padding: 20px 22px; margin-bottom: 24px;
+  box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+}
+.stmt-freedom.is-free{
+  border-color: var(--col-done-b);
+  background: linear-gradient(180deg, var(--col-done), var(--surface));
+}
+.stmt-free-top{ display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.stmt-free-title{ font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--text); }
+.stmt-free-pct{ font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--accent); letter-spacing: -.01em; }
+.stmt-freedom.is-free .stmt-free-pct{ color: var(--col-done-t); }
+.stmt-bar{
+  height: 12px; border-radius: 99px; background: var(--bg);
+  border: 1px solid var(--border); margin: 12px 0 10px; overflow: hidden;
+}
+.stmt-bar-fill{
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+  transition: width .55s cubic-bezier(.2,.7,.2,1);
+}
+.stmt-freedom.is-free .stmt-bar-fill{ background: linear-gradient(90deg, var(--col-done-t), #2f9d6a); }
+.stmt-free-cap{ font-size: 13px; color: var(--muted); }
+.stmt-free-cap b{ color: var(--text); font-variant-numeric: tabular-nums; }
+.stmt-free-msg{ font-size: 12.5px; color: var(--hint); margin-top: 6px; }
+.stmt-freedom.is-free .stmt-free-msg{ color: var(--col-done-t); font-weight: 500; }
+
+/* Two-column cashflow + balance grid */
+.stmt-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 8px; }
+.stmt-block{
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 6px 16px 14px; box-shadow: var(--shadow-card);
+}
+.stmt-block-head{
+  font-size: 12.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  padding: 12px 0 9px; margin-bottom: 6px; border-bottom: 2px solid var(--border-md);
+}
+.stmt-h-in{ color: var(--col-done-t); border-bottom-color: var(--col-done-b); }
+.stmt-h-out{ color: var(--pri-high-t); border-bottom-color: var(--pri-high-bg); }
+.stmt-h-asset{ color: var(--col-todo-t); border-bottom-color: var(--col-todo-b); }
+.stmt-h-liab{ color: var(--pri-med-t); border-bottom-color: var(--col-prog-b); }
+
+.stmt-row{
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 7px 0; font-size: 14px; border-bottom: 1px dashed var(--border);
+}
+.stmt-row:last-child{ border-bottom: none; }
+.stmt-row-label{ color: var(--muted); }
+.stmt-row-amt{ color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stmt-row-empty{ color: var(--hint); font-size: 13px; justify-content: flex-start; font-style: italic; }
+.stmt-tag-pass{
+  font-size: 9.5px; font-weight: 700; letter-spacing: .04em; vertical-align: middle;
+  color: var(--col-done-t); background: var(--col-done);
+  padding: 1px 6px; border-radius: 99px; margin-left: 6px;
+}
+.stmt-tag-recur{
+  font-size: 9.5px; font-weight: 700; letter-spacing: .04em; vertical-align: middle;
+  color: var(--pri-med-t); background: var(--pri-med-bg);
+  padding: 1px 6px; border-radius: 99px; margin-left: 6px;
+}
+.stmt-recur-row .stmt-row-label{ color: var(--text); }
+.stmt-recur-block{ padding-top: 12px; }
+.stmt-sub .stmt-row-label{ color: var(--text); }
+.stmt-sub .stmt-row-amt{ font-weight: 600; }
+.stmt-sub-pass .stmt-row-label{ color: var(--col-done-t); }
+.stmt-sub-pass .stmt-row-amt{ color: var(--col-done-t); }
+.stmt-total{
+  margin-top: 4px; padding-top: 10px; border-top: 1.5px solid var(--border-md); border-bottom: none;
+}
+.stmt-total .stmt-row-label{ font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--text); }
+.stmt-total .stmt-row-amt{ font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--text); }
+
+/* Monthly cashflow banner */
+.stmt-cashflow{
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--surface); border: 1.5px solid var(--border-md); border-radius: var(--radius);
+  padding: 14px 20px; margin: 14px 0 6px; box-shadow: var(--shadow-card);
+}
+.stmt-cf-label{ font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; color: var(--text); }
+.stmt-cf-amt{ font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--muted); }
+.stmt-cf-amt.pos{ color: var(--col-done-t); }
+.stmt-cf-amt.neg{ color: var(--pri-high-t); }
+.stmt-note{ font-size: 12px; color: var(--hint); margin: 4px 2px 0; line-height: 1.5; }
+.stmt-note b{ color: var(--accent); }
+
+/* Net worth */
+.stmt-h3{
+  font-family: 'Fraunces', serif; font-size: 21px; font-weight: 600; color: var(--text);
+  margin: 34px 0 14px; padding-top: 22px; border-top: 1px solid var(--border);
+}
+.stmt-h3-hint{ font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 400; color: var(--hint); }
+.stmt-nw-list{ display: flex; flex-direction: column; gap: 6px; margin: 8px 0 10px; }
+.stmt-nw-row{ display: flex; align-items: center; gap: 8px; }
+.stmt-nw-name{
+  flex: 1; min-width: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; color: var(--text);
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 7px 11px; outline: none; transition: border-color .15s;
+}
+.stmt-nw-amt{
+  width: 120px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; color: var(--text);
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 7px 11px; outline: none; transition: border-color .15s;
+}
+.stmt-nw-name:focus, .stmt-nw-amt:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.stmt-nw-amt.err{ border-color: var(--pri-high-t); animation: shake .35s ease; }
+.stmt-nw-del{
+  flex-shrink: 0; width: 30px; height: 30px;
+  background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--hint); font-size: 12px; cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.stmt-nw-del:hover{ background: var(--pri-high-bg); border-color: var(--pri-high-t); color: var(--pri-high-t); }
+.stmt-nw-add{ display: flex; gap: 8px; align-items: center; }
+.stmt-nw-add input[type="text"]{ flex: 1; min-width: 0; }
+.stmt-nw-add input[type="number"]{ width: 120px; flex-shrink: 0; text-align: right; }
+.stmt-nw-add input{
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 8px 11px; outline: none; transition: border-color .15s;
+}
+.stmt-nw-add input::placeholder{ color: var(--hint); }
+.stmt-nw-add input:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.stmt-nw-add input.err{ border-color: var(--pri-high-t); animation: shake .35s ease; }
+.stmt-add-btn{
+  flex-shrink: 0; padding: 8px 14px; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  background: var(--surface); border: 1.5px solid var(--accent); border-radius: var(--radius-sm);
+  cursor: pointer; white-space: nowrap; transition: background .12s;
+}
+.stmt-add-btn:hover{ background: var(--accent-soft); }
+
+.stmt-networth{
+  margin-top: 18px; padding: 16px 20px;
+  background: var(--surface); border: 1.5px solid var(--border-md); border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+}
+.stmt-nw-sums{ display: flex; gap: 20px; font-size: 13px; color: var(--muted); }
+.stmt-nw-sums b{ color: var(--text); font-variant-numeric: tabular-nums; }
+.stmt-nw-net{ font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--text); }
+.stmt-nw-net span{ font-size: 22px; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.stmt-nw-net span.pos{ color: var(--col-done-t); }
+.stmt-nw-net span.neg{ color: var(--pri-high-t); }
+
+@media (max-width: 700px){
+  .stmt-section{ padding-left: 18px; padding-right: 18px; }
+  .stmt-grid{ grid-template-columns: 1fr; }
+  .money-cat-sel{ max-width: 100px; }
+}
+
+/* ============================================================
+   FULL-WIDTH LAYOUT
+   Projects (header / board / etc.) span the full width as before.
+   On wide screens the Finances view becomes two columns:
+   the ledger on the left and the statement on the right.
+   ============================================================ */
+.finance-wrap{ padding: 0 40px; margin-top: 8px; }
+/* Finances view only: drop the masthead's divider line and tighten the gap above Transactions
+   (Projects keeps its header rule unchanged) */
+body.view-finances header{ border-bottom: none; margin-bottom: 0; padding-bottom: 12px; }
+/* Sections inside the wrapper drop their own gutters/caps — the wrapper owns them */
+.finance-wrap .money-section,
+.finance-wrap .stmt-section{ max-width: none; padding: 0; margin-top: 0; }
+
+@media (min-width: 1200px){
+  .finance-wrap{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 40px;
+    align-items: start;
+  }
+  /* Right column (statement) tracks the page as you scroll the long left ledger */
+  .finance-wrap .stmt-section{ position: sticky; top: 24px; }
+  /* The statement heading no longer needs its divider rule when it's a column top */
+  .finance-wrap .stmt-section > .stmt-h3:first-child{ border-top: none; padding-top: 0; margin-top: 4px; }
+  /* With vertical room beside the statement, let the ledger list breathe */
+  .finance-wrap .money-list{ max-height: none; }
+}
+
+@media (max-width: 700px){
+  .finance-wrap{ padding-left: 18px; padding-right: 18px; }
+}
 </style>
 </head>
 <body>
@@ -785,7 +1030,7 @@ header p{ letter-spacing: .005em; }
         </button>
         <button class="menu-item" role="menuitem" id="view-money-item" onclick="switchView('money')">
           <svg class="mi-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 4.5v7M9.8 6.2C9.4 5.5 8.8 5.2 8 5.2c-1 0-1.7.5-1.7 1.3 0 2 3.6 1 3.6 3 0 .9-.8 1.4-1.9 1.4-.9 0-1.5-.3-1.9-1"/></svg>
-          Money Recorder
+          Finances
           <svg class="menu-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
         </button>
       </div>
@@ -878,11 +1123,13 @@ header p{ letter-spacing: .005em; }
 
 <!-- ════════ Money Recorder ════════ -->
 <hr class="money-divider" />
+<div class="finance-wrap" id="finance-wrap" style="display:none">
 <section class="money-section">
   <div class="money-header">
     <h2>Money <span>Recorder</span></h2>
     <p>Track income &amp; expenses in any currency · saved, synced &amp; encrypted alongside your projects</p>
   </div>
+  <h3 class="stmt-h3 combined-first">Transactions <span class="stmt-h3-hint">Log every income &amp; expense</span></h3>
   <div class="money-add-bar">
     <input type="text" id="txn-desc" placeholder="What's it for? (e.g. Groceries, Salary)" autocomplete="off" />
     <input type="number" id="txn-amt" placeholder="0.00" step="0.01" min="0" inputmode="decimal" />
@@ -899,6 +1146,7 @@ header p{ letter-spacing: .005em; }
       <option value="AUD">AUD $</option>
       <option value="CAD">CAD $</option>
     </select>
+    <select id="txn-cat" aria-label="Category"></select>
     <div class="seg" id="txn-type-seg">
       <button type="button" class="seg-btn active" data-v="out" onclick="setTxnType('out')">Expense</button>
       <button type="button" class="seg-btn" data-v="in" onclick="setTxnType('in')">Income</button>
@@ -910,6 +1158,87 @@ header p{ letter-spacing: .005em; }
   <div class="money-summary" id="money-summary"></div>
   <div class="money-list" id="money-list"></div>
 </section>
+
+<!-- ── Financial Statement (auto-derived from the ledger) ── -->
+<section class="stmt-section" id="stmt-section">
+  <h3 class="stmt-h3">Statement <span class="stmt-h3-hint">This month&rsquo;s cashflow &amp; financial-freedom progress</span></h3>
+  <div class="stmt-controls">
+    <div class="stmt-monthnav">
+      <button class="stmt-navbtn" onclick="stmtShiftMonth(-1)" aria-label="Previous month">◀</button>
+      <input type="month" id="stmt-month" onchange="stmtMonthChanged()" />
+      <button class="stmt-navbtn" onclick="stmtShiftMonth(1)" aria-label="Next month">▶</button>
+    </div>
+    <div class="stmt-basewrap">
+      <span class="stmt-baselabel">Base currency</span>
+      <select id="stmt-base" onchange="stmtBaseChanged()">
+        <option value="TWD">TWD NT$</option>
+        <option value="USD">USD $</option>
+        <option value="EUR">EUR €</option>
+        <option value="JPY">JPY ¥</option>
+        <option value="GBP">GBP £</option>
+        <option value="CNY">CNY ¥</option>
+        <option value="KRW">KRW ₩</option>
+        <option value="HKD">HKD $</option>
+        <option value="SGD">SGD $</option>
+        <option value="AUD">AUD $</option>
+        <option value="CAD">CAD $</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Freedom meter: passive income vs total expenses (the goal of the sheet) -->
+  <div class="stmt-freedom" id="stmt-freedom"></div>
+
+  <!-- Monthly cashflow: income vs expense -->
+  <div class="stmt-grid">
+    <div class="stmt-block">
+      <div class="stmt-block-head stmt-h-in">Income</div>
+      <div id="stmt-income"></div>
+    </div>
+    <div class="stmt-block">
+      <div class="stmt-block-head stmt-h-out">Expenses</div>
+      <div id="stmt-expense"></div>
+    </div>
+  </div>
+  <div class="stmt-cashflow" id="stmt-cashflow"></div>
+  <div class="stmt-note" id="stmt-note"></div>
+
+  <!-- Fixed monthly / subscription expenses -->
+  <h3 class="stmt-h3">Fixed / Subscriptions <span class="stmt-h3-hint">(counted every month — e.g. YouTube Premium, Netflix, insurance · in base currency)</span></h3>
+  <div class="stmt-block stmt-recur-block">
+    <div class="stmt-nw-list" id="recur-list"></div>
+    <div class="stmt-nw-add">
+      <input type="text" id="recur-name" placeholder="Subscription / item (e.g. YouTube Premium)" autocomplete="off" />
+      <input type="number" id="recur-amt" placeholder="Monthly amount" step="0.01" inputmode="decimal" />
+      <button class="stmt-add-btn" onclick="addRecur()">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Net worth: manual assets & liabilities -->
+  <h3 class="stmt-h3">Balance sheet <span class="stmt-h3-hint">(entered manually — not derived from transactions)</span></h3>
+  <div class="stmt-grid">
+    <div class="stmt-block">
+      <div class="stmt-block-head stmt-h-asset">Assets</div>
+      <div class="stmt-nw-list" id="nw-assets"></div>
+      <div class="stmt-nw-add">
+        <input type="text" id="nw-asset-name" placeholder="Item (e.g. house, stocks, savings)" autocomplete="off" />
+        <input type="number" id="nw-asset-amt" placeholder="Amount" step="0.01" inputmode="decimal" />
+        <button class="stmt-add-btn" onclick="addNw('asset')">+ Add</button>
+      </div>
+    </div>
+    <div class="stmt-block">
+      <div class="stmt-block-head stmt-h-liab">Liabilities</div>
+      <div class="stmt-nw-list" id="nw-liabs"></div>
+      <div class="stmt-nw-add">
+        <input type="text" id="nw-liab-name" placeholder="Item (e.g. mortgage, credit card, car loan)" autocomplete="off" />
+        <input type="number" id="nw-liab-amt" placeholder="Amount" step="0.01" inputmode="decimal" />
+        <button class="stmt-add-btn" onclick="addNw('liab')">+ Add</button>
+      </div>
+    </div>
+  </div>
+  <div class="stmt-networth" id="stmt-networth"></div>
+</section>
+</div>
 
 <!-- Project detail modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
@@ -987,36 +1316,97 @@ const EMPTY_MSG   = [
 ];
 
 let projects = [];
-let txns     = [];   // money recorder entries: { id, desc, amount, currency, type:'in'|'out', date }
+let txns     = [];   // money recorder entries: { id, desc, amount, currency, type:'in'|'out', date, category }
 let dragId   = null;
 let activeId = null;
 
-/* ── Shared state serialization (projects + money) ── */
+/* ── Statement feature data ──
+   Income categories carry a `passive` flag (the heart of the CASHFLOW sheet:
+   passive income = interest/dividends + rent + business). Expenses are flat. */
+const TXN_CATS = {
+  in: [
+    { key: 'salary',    label: 'Salary',         passive: false },
+    { key: 'interest',  label: 'Interest / Dividends',    passive: true  },
+    { key: 'rent',      label: 'Rental income',      passive: true  },
+    { key: 'business',  label: 'Business',    passive: true  },
+    { key: 'other_in',  label: 'Other income',      passive: false }
+  ],
+  out: [
+    { key: 'housing',   label: 'Housing (mortgage/rent)' },
+    { key: 'living',    label: 'Living' },
+    { key: 'insurance', label: 'Insurance' },
+    { key: 'transport', label: 'Transport' },
+    { key: 'tax',       label: 'Tax / Fees' },
+    { key: 'credit',    label: 'Credit card' },
+    { key: 'other_out', label: 'Other' }
+  ]
+};
+function catDefault(type){ return type === 'in' ? 'other_in' : 'other_out'; }
+function catMetaOf(type, key){
+  const list = TXN_CATS[type === 'in' ? 'in' : 'out'];
+  return list.find(c => c.key === key) || list.find(c => c.key === catDefault(type));
+}
+function isPassiveTxn(t){
+  if (t.type !== 'in') return false;
+  const m = catMetaOf('in', t.category);
+  return !!(m && m.passive);
+}
+function catOptions(type, selectedKey){
+  const list = TXN_CATS[type === 'in' ? 'in' : 'out'];
+  const sel = list.some(c => c.key === selectedKey) ? selectedKey : catDefault(type);
+  return list.map(c => `<option value="${c.key}" ${c.key === sel ? 'selected' : ''}>${esc(c.label)}</option>`).join('');
+}
+
+let nwAssets = [];      // net-worth assets:      { id, name, amount }   (in base currency)
+let nwLiabs  = [];      // net-worth liabilities: { id, name, amount }
+let recurring = [];     // fixed monthly expenses (subscriptions): { id, name, amount } in base currency
+let stmtMonth = null;   // 'YYYY-MM' currently shown in the statement
+let stmtBase  = 'TWD';  // base currency for the statement & net worth
+
+/* ── Shared state serialization (projects + money + net worth + recurring) ── */
 function buildPayload() {
-  return { exported: new Date().toISOString(), version: 2, projects, txns };
+  return { exported: new Date().toISOString(), version: 4, projects, txns, nwAssets, nwLiabs, recurring, stmtBase };
 }
 function extractState(obj) {
-  // Accepts a bare array (legacy = projects only) or a { projects, txns } object
-  if (Array.isArray(obj)) return { projects: obj, txns: [] };
+  // Accepts a bare array (legacy = projects only) or a { projects, txns, ... } object
+  if (Array.isArray(obj)) return { projects: obj, txns: [], nwAssets: [], nwLiabs: [], recurring: [], stmtBase: null };
   return {
-    projects: Array.isArray(obj && obj.projects) ? obj.projects : [],
-    txns:     Array.isArray(obj && obj.txns)     ? obj.txns     : []
+    projects:  Array.isArray(obj && obj.projects)  ? obj.projects  : [],
+    txns:      Array.isArray(obj && obj.txns)      ? obj.txns      : [],
+    nwAssets:  Array.isArray(obj && obj.nwAssets)  ? obj.nwAssets  : [],
+    nwLiabs:   Array.isArray(obj && obj.nwLiabs)   ? obj.nwLiabs   : [],
+    recurring: Array.isArray(obj && obj.recurring) ? obj.recurring : [],
+    stmtBase:  (obj && typeof obj.stmtBase === 'string') ? obj.stmtBase : null
   };
 }
 function applyState(obj) {
   const s = extractState(obj);
-  projects = s.projects;
-  txns     = s.txns;
+  projects  = s.projects;
+  txns      = s.txns;
+  nwAssets  = s.nwAssets;
+  nwLiabs   = s.nwLiabs;
+  recurring = s.recurring;
+  if (s.stmtBase) stmtBase = s.stmtBase;
 }
 function applyIncomingState(state, replace) {
   if (replace) {
-    projects = state.projects;
-    txns     = state.txns;
+    projects  = state.projects;
+    txns      = state.txns;
+    nwAssets  = state.nwAssets;
+    nwLiabs   = state.nwLiabs;
+    recurring = state.recurring;
+    if (state.stmtBase) stmtBase = state.stmtBase;
   } else {
     const pids = new Set(projects.map(p => p.id));
     projects = [...projects, ...state.projects.filter(p => !pids.has(p.id))];
     const tids = new Set(txns.map(t => t.id));
     txns = [...txns, ...state.txns.filter(t => !tids.has(t.id))];
+    const aids = new Set(nwAssets.map(a => a.id));
+    nwAssets = [...nwAssets, ...state.nwAssets.filter(a => !aids.has(a.id))];
+    const lids = new Set(nwLiabs.map(l => l.id));
+    nwLiabs = [...nwLiabs, ...state.nwLiabs.filter(l => !lids.has(l.id))];
+    const rids = new Set(recurring.map(r => r.id));
+    recurring = [...recurring, ...state.recurring.filter(r => !rids.has(r.id))];
   }
 }
 
@@ -1434,6 +1824,24 @@ function setTxnType(v) {
   document.querySelectorAll('#txn-type-seg .seg-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.v === v);
   });
+  populateTxnCats();
+}
+
+/* Fill the add-bar category dropdown to match the current income/expense type */
+function populateTxnCats() {
+  const sel = document.getElementById('txn-cat');
+  if (!sel) return;
+  const type = document.getElementById('txn-type').value === 'in' ? 'in' : 'out';
+  sel.innerHTML = catOptions(type, sel.value);
+}
+
+/* Change the category of an existing transaction (inline select on each row) */
+function editTxnCat(id, key) {
+  const t = txns.find(x => x.id === id);
+  if (!t) return;
+  t.category = key;
+  save();
+  renderStatement();
 }
 
 function fmtMoney(amt, cur) {
@@ -1482,6 +1890,7 @@ function renderMoney() {
   const list = document.getElementById('money-list');
   if (!txns.length) {
     list.innerHTML = `<div class="empty">No transactions yet.<br>Record your first income or expense above!</div>`;
+    renderStatement();
     return;
   }
   const sorted = [...txns].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1495,10 +1904,12 @@ function renderMoney() {
           <div class="money-row-desc">${esc(t.desc || (isIn ? 'Income' : 'Expense'))}</div>
           <div class="money-row-date">${esc(fmtDate(t.date))}</div>
         </div>
+        <select class="money-cat-sel ${isIn ? 'is-in' : 'is-out'}" onchange="editTxnCat('${esc(t.id)}', this.value)" title="Category">${catOptions(t.type, t.category)}</select>
         <div class="money-row-amt ${cls}">${sign} ${esc(fmtMoney(t.amount, t.currency))}</div>
         <button class="money-del" onclick="delTxn('${esc(t.id)}')" title="Delete">✕</button>
       </div>`;
   }).join('');
+  renderStatement();
 }
 
 function addTxn() {
@@ -1506,6 +1917,8 @@ function addTxn() {
   const amtEl  = document.getElementById('txn-amt');
   const cur    = document.getElementById('txn-cur').value;
   const type   = document.getElementById('txn-type').value === 'in' ? 'in' : 'out';
+  const catEl  = document.getElementById('txn-cat');
+  const category = catEl ? catEl.value : catDefault(type);
   const dateEl = document.getElementById('txn-date');
 
   const amt = parseFloat(amtEl.value);
@@ -1529,6 +1942,7 @@ function addTxn() {
     amount: Math.abs(amt),
     currency: cur,
     type,
+    category,
     date
   });
   try { localStorage.setItem('last_currency', cur); } catch(e) {}
@@ -1544,6 +1958,260 @@ function delTxn(id) {
   if (!confirm('Delete this transaction?')) return;
   txns = txns.filter(t => t.id !== id);
   renderMoney();
+  save();
+}
+
+/* ══════════════════════════════════════════
+   ── Financial Statement (auto-derived) ──
+   ══════════════════════════════════════════ */
+function txnMonthKey(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function thisMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function monthLabel(key){
+  if (!key) return '';
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(y, (m || 1) - 1, 1);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+}
+function nwTotal(list){ return list.reduce((s, x) => s + (Number(x.amount) || 0), 0); }
+
+function stmtMonthChanged(){
+  const v = document.getElementById('stmt-month').value;
+  if (v) stmtMonth = v;
+  renderStatement();
+}
+function stmtShiftMonth(delta){
+  const base = stmtMonth || thisMonthKey();
+  const [y, m] = base.split('-').map(Number);
+  const d = new Date(y, (m - 1) + delta, 1);
+  stmtMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  const inp = document.getElementById('stmt-month');
+  if (inp) inp.value = stmtMonth;
+  renderStatement();
+}
+function stmtBaseChanged(){
+  stmtBase = document.getElementById('stmt-base').value || 'TWD';
+  try { localStorage.setItem('stmt_base', stmtBase); } catch(e) {}
+  save();          // base currency is part of the saved payload
+  renderStatement();
+}
+
+function renderStatement(){
+  const sec = document.getElementById('stmt-section');
+  if (!sec) return;                       // statement DOM not present yet
+  if (!stmtMonth) stmtMonth = thisMonthKey();
+  const base = stmtBase || 'TWD';
+
+  // Keep the controls in sync with state (e.g. base currency loaded from payload)
+  const baseSel = document.getElementById('stmt-base');
+  if (baseSel && baseSel.value !== base && [...baseSel.options].some(o => o.value === base)) baseSel.value = base;
+  const monthInp = document.getElementById('stmt-month');
+  if (monthInp && !monthInp.value) monthInp.value = stmtMonth;
+
+  // Transactions in the selected month — split by base vs other currency
+  const monthTxns = txns.filter(t => txnMonthKey(t.date) === stmtMonth);
+  const inBase = monthTxns.filter(t => (t.currency || base) === base);
+  const otherCount = monthTxns.length - inBase.length;
+
+  // Aggregate income by category (+ earned/passive subtotals) and expenses
+  const incByCat = {}, expByCat = {};
+  let earned = 0, passive = 0, expenseLogged = 0;
+  inBase.forEach(t => {
+    const amt = Number(t.amount) || 0;
+    if (t.type === 'in') {
+      const m = catMetaOf('in', t.category);
+      incByCat[m.key] = (incByCat[m.key] || 0) + amt;
+      if (m.passive) passive += amt; else earned += amt;
+    } else {
+      const m = catMetaOf('out', t.category);
+      expByCat[m.key] = (expByCat[m.key] || 0) + amt;
+      expenseLogged += amt;
+    }
+  });
+  const recurringTotal = recurring.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const income   = earned + passive;
+  const expense  = expenseLogged + recurringTotal;   // fixed monthly costs always count
+  const cashflow = income - expense;
+
+  // ── Income block ──
+  const incEl = document.getElementById('stmt-income');
+  const incRows = TXN_CATS.in
+    .filter(c => incByCat[c.key])
+    .map(c => `<div class="stmt-row"><span class="stmt-row-label">${esc(c.label)}${c.passive ? ' <span class="stmt-tag-pass">passive</span>' : ''}</span><span class="stmt-row-amt">${esc(fmtMoney(incByCat[c.key], base))}</span></div>`)
+    .join('');
+  incEl.innerHTML = (incRows || `<div class="stmt-row stmt-row-empty">No income recorded this month</div>`)
+    + `<div class="stmt-row stmt-sub"><span class="stmt-row-label">Earned income</span><span class="stmt-row-amt">${esc(fmtMoney(earned, base))}</span></div>`
+    + `<div class="stmt-row stmt-sub stmt-sub-pass"><span class="stmt-row-label">Passive income</span><span class="stmt-row-amt">${esc(fmtMoney(passive, base))}</span></div>`
+    + `<div class="stmt-row stmt-total"><span class="stmt-row-label">Total income</span><span class="stmt-row-amt">${esc(fmtMoney(income, base))}</span></div>`;
+
+  // ── Expense block (logged transactions + fixed monthly subscriptions) ──
+  const expEl = document.getElementById('stmt-expense');
+  const expRows = TXN_CATS.out
+    .filter(c => expByCat[c.key])
+    .map(c => `<div class="stmt-row"><span class="stmt-row-label">${esc(c.label)}</span><span class="stmt-row-amt">${esc(fmtMoney(expByCat[c.key], base))}</span></div>`)
+    .join('');
+  const recurRow = recurringTotal
+    ? `<div class="stmt-row stmt-recur-row"><span class="stmt-row-label">Fixed / Subscriptions <span class="stmt-tag-recur">monthly</span></span><span class="stmt-row-amt">${esc(fmtMoney(recurringTotal, base))}</span></div>`
+    : '';
+  const hasExp = expRows || recurRow;
+  expEl.innerHTML = (hasExp ? (expRows + recurRow) : `<div class="stmt-row stmt-row-empty">No expenses recorded this month</div>`)
+    + `<div class="stmt-row stmt-total"><span class="stmt-row-label">Total expenses</span><span class="stmt-row-amt">${esc(fmtMoney(expense, base))}</span></div>`;
+
+  // ── Monthly cashflow ──
+  const cfEl = document.getElementById('stmt-cashflow');
+  const cfClass = cashflow > 0 ? 'pos' : (cashflow < 0 ? 'neg' : '');
+  cfEl.innerHTML = `<span class="stmt-cf-label">${esc(monthLabel(stmtMonth))} cashflow</span>`
+    + `<span class="stmt-cf-amt ${cfClass}">${cashflow > 0 ? '+' : ''}${esc(fmtMoney(cashflow, base))}</span>`;
+
+  // ── Freedom meter: passive income vs total expenses ──
+  const freeEl = document.getElementById('stmt-freedom');
+  const ratio = expense > 0 ? (passive / expense) : (passive > 0 ? 1 : 0);
+  const pct = Math.round(ratio * 100);
+  const fillW = Math.min(100, pct);
+  const free = ratio >= 1 && (passive > 0);
+  freeEl.className = 'stmt-freedom' + (free ? ' is-free' : '');
+  freeEl.innerHTML = `
+    <div class="stmt-free-top">
+      <span class="stmt-free-title">Financial freedom</span>
+      <span class="stmt-free-pct">${pct}%</span>
+    </div>
+    <div class="stmt-bar"><div class="stmt-bar-fill" style="width:${fillW}%"></div></div>
+    <div class="stmt-free-cap">
+      Passive income <b>${esc(fmtMoney(passive, base))}</b> / Total expenses <b>${esc(fmtMoney(expense, base))}</b>
+    </div>
+    <div class="stmt-free-msg">${
+      free
+        ? '🎉 Passive income now covers your expenses — welcome to the Fast Track!'
+        : 'Goal: get passive income above total expenses to escape the Rat Race.'
+    }</div>`;
+
+  // ── Other-currency note ──
+  const noteEl = document.getElementById('stmt-note');
+  noteEl.innerHTML = otherCount > 0
+    ? `ⓘ ${otherCount} transaction(s) in other currencies aren't included this month (the statement only counts the base currency, ${esc(base)}).`
+    : '';
+
+  // ── Recurring subscriptions + net worth ──
+  renderRecur(base);
+  renderNetWorth(base);
+}
+
+function renderRecur(base){
+  const el = document.getElementById('recur-list');
+  if (!el) return;
+  base = base || stmtBase || 'TWD';
+  if (!recurring.length) {
+    el.innerHTML = `<div class="stmt-row stmt-row-empty">No fixed expenses yet — add one below (e.g. YouTube Premium)</div>`;
+    return;
+  }
+  el.innerHTML = recurring.map(r => `
+    <div class="stmt-nw-row">
+      <input type="text" class="stmt-nw-name" value="${esc(r.name || '')}"
+        onchange="editRecur('${esc(r.id)}','name',this.value)" placeholder="Subscription / item" />
+      <input type="number" class="stmt-nw-amt" value="${Number(r.amount) || 0}" step="0.01" inputmode="decimal"
+        onchange="editRecur('${esc(r.id)}','amount',this.value)" />
+      <button class="stmt-nw-del" onclick="delRecur('${esc(r.id)}')" title="Delete">✕</button>
+    </div>`).join('');
+}
+function addRecur(){
+  const nameEl = document.getElementById('recur-name');
+  const amtEl  = document.getElementById('recur-amt');
+  const name = nameEl.value.trim();
+  const amt  = parseFloat(amtEl.value);
+  if (!name) { nameEl.focus(); return; }
+  if (isNaN(amt) || amt <= 0) {
+    amtEl.classList.add('err'); setTimeout(() => amtEl.classList.remove('err'), 500); amtEl.focus(); return;
+  }
+  recurring.push({ id: uid(), name, amount: Math.abs(amt) });
+  nameEl.value = ''; amtEl.value = '';
+  renderStatement();   // affects total expense / cashflow / freedom meter
+  save();
+  nameEl.focus();
+}
+function editRecur(id, field, value){
+  const r = recurring.find(x => x.id === id);
+  if (!r) return;
+  if (field === 'amount') r.amount = Math.abs(parseFloat(value) || 0);
+  else r.name = value;
+  renderStatement();
+  save();
+}
+function delRecur(id){
+  recurring = recurring.filter(x => x.id !== id);
+  renderStatement();
+  save();
+}
+
+function renderNetWorth(base){
+  const aEl = document.getElementById('nw-assets');
+  const lEl = document.getElementById('nw-liabs');
+  if (!aEl || !lEl) return;
+  base = base || stmtBase || 'TWD';
+
+  const rowHtml = (kind, x) => `
+    <div class="stmt-nw-row">
+      <input type="text" class="stmt-nw-name" value="${esc(x.name || '')}"
+        onchange="editNw('${kind}','${esc(x.id)}','name',this.value)" placeholder="Item" />
+      <input type="number" class="stmt-nw-amt" value="${Number(x.amount) || 0}" step="0.01" inputmode="decimal"
+        onchange="editNw('${kind}','${esc(x.id)}','amount',this.value)" />
+      <button class="stmt-nw-del" onclick="delNw('${kind}','${esc(x.id)}')" title="Delete">✕</button>
+    </div>`;
+
+  aEl.innerHTML = nwAssets.length
+    ? nwAssets.map(x => rowHtml('asset', x)).join('')
+    : `<div class="stmt-row stmt-row-empty">No assets yet — add one below</div>`;
+  lEl.innerHTML = nwLiabs.length
+    ? nwLiabs.map(x => rowHtml('liab', x)).join('')
+    : `<div class="stmt-row stmt-row-empty">No liabilities yet — add one below</div>`;
+
+  const totalA = nwTotal(nwAssets);
+  const totalL = nwTotal(nwLiabs);
+  const net = totalA - totalL;
+  const netEl = document.getElementById('stmt-networth');
+  const netClass = net > 0 ? 'pos' : (net < 0 ? 'neg' : '');
+  netEl.innerHTML = `
+    <div class="stmt-nw-sums">
+      <span>Total assets <b>${esc(fmtMoney(totalA, base))}</b></span>
+      <span>Total liabilities <b>${esc(fmtMoney(totalL, base))}</b></span>
+    </div>
+    <div class="stmt-nw-net">Net worth <span class="${netClass}">${esc(fmtMoney(net, base))}</span></div>`;
+}
+
+function addNw(kind){
+  const nameEl = document.getElementById(kind === 'asset' ? 'nw-asset-name' : 'nw-liab-name');
+  const amtEl  = document.getElementById(kind === 'asset' ? 'nw-asset-amt'  : 'nw-liab-amt');
+  const name = nameEl.value.trim();
+  const amt  = parseFloat(amtEl.value);
+  if (!name) { nameEl.focus(); return; }
+  if (isNaN(amt)) {
+    amtEl.classList.add('err'); setTimeout(() => amtEl.classList.remove('err'), 500); amtEl.focus(); return;
+  }
+  const item = { id: uid(), name, amount: Math.abs(amt) };
+  if (kind === 'asset') nwAssets.push(item); else nwLiabs.push(item);
+  nameEl.value = ''; amtEl.value = '';
+  renderNetWorth();
+  save();
+  nameEl.focus();
+}
+function editNw(kind, id, field, value){
+  const list = kind === 'asset' ? nwAssets : nwLiabs;
+  const x = list.find(i => i.id === id);
+  if (!x) return;
+  if (field === 'amount') x.amount = Math.abs(parseFloat(value) || 0);
+  else x.name = value;
+  renderNetWorth();
+  save();
+}
+function delNw(kind, id){
+  if (kind === 'asset') nwAssets = nwAssets.filter(i => i.id !== id);
+  else nwLiabs = nwLiabs.filter(i => i.id !== id);
+  renderNetWorth();
   save();
 }
 
@@ -1882,6 +2550,23 @@ document.getElementById('txn-amt').addEventListener('keydown', e => { if (e.key 
       if ([...sel.options].some(o => o.value === lc)) sel.value = lc;
     }
   } catch(e) {}
+  populateTxnCats();
+})();
+
+/* ── Statement init: base currency + current month ── */
+(function initStatement() {
+  // stmtBase may already have been set by applyState() from the saved payload;
+  // otherwise fall back to a saved preference, else TWD.
+  try {
+    const sb = localStorage.getItem('stmt_base');
+    if (sb && (!stmtBase || stmtBase === 'TWD')) stmtBase = sb;
+  } catch(e) {}
+  const baseSel = document.getElementById('stmt-base');
+  if (baseSel && [...baseSel.options].some(o => o.value === stmtBase)) baseSel.value = stmtBase;
+
+  stmtMonth = thisMonthKey();
+  const monthInp = document.getElementById('stmt-month');
+  if (monthInp) monthInp.value = stmtMonth;
 })();
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
@@ -1934,29 +2619,31 @@ document.addEventListener('click', e => { if (!e.target.closest('.menu-wrap')) c
 /* ── View switching: My Projects ⇄ Money Recorder ── */
 let currentView = 'projects';
 const VIEW_META = {
-  projects: { title: 'My <span>Projects</span>', sub: 'Drag cards between columns · Click a card title to add notes &amp; to-dos' },
-  money:    { title: 'Money <span>Recorder</span>', sub: 'Track income &amp; expenses in any currency · saved, synced &amp; encrypted with your projects' }
+  projects:  { title: 'My <span>Projects</span>', sub: 'Drag cards between columns · Click a card title to add notes &amp; to-dos' },
+  money:     { title: 'My <span>Finances</span>', sub: 'Transactions, monthly statement, fixed expenses &amp; net worth — all on one page' }
 };
 function switchView(v) {
-  currentView = (v === 'money') ? 'money' : 'projects';
-  const showMoney = currentView === 'money';
+  // 'statement' is folded into 'money' now (kept for backward-compatible restore)
+  currentView = (v === 'money' || v === 'statement') ? 'money' : 'projects';
+  const isMoney = currentView === 'money';
+  const isProj  = !isMoney;
 
   // Projects-only elements
   const stats = document.querySelector('.stats');
   const addBar = document.querySelector('.add-bar');
   const board = document.querySelector('.board');
-  if (stats)  stats.style.display  = showMoney ? 'none' : '';
-  if (addBar) addBar.style.display = showMoney ? 'none' : '';
-  if (board)  board.style.display  = showMoney ? 'none' : '';
+  if (stats)  stats.style.display  = isProj ? '' : 'none';
+  if (addBar) addBar.style.display = isProj ? '' : 'none';
+  if (board)  board.style.display  = isProj ? '' : 'none';
 
-  // Money-only elements (the section's own header is redundant now that the
-  // page header changes, so hide it; the divider is no longer needed either)
-  const divider = document.querySelector('.money-divider');
-  const moneySec = document.querySelector('.money-section');
+  // The combined money view = ledger + statement, wrapped in one container
+  const divider  = document.querySelector('.money-divider');
   const moneyHdr = document.querySelector('.money-header');
+  const financeWrap = document.getElementById('finance-wrap');
   if (divider)  divider.style.display  = 'none';
   if (moneyHdr) moneyHdr.style.display = 'none';
-  if (moneySec) moneySec.style.display = showMoney ? '' : 'none';
+  if (financeWrap) financeWrap.style.display = isMoney ? '' : 'none';
+  document.body.classList.toggle('view-finances', isMoney);
 
   // Update page header text
   const meta = VIEW_META[currentView];
@@ -1964,13 +2651,13 @@ function switchView(v) {
   document.getElementById('app-subtitle').innerHTML = meta.sub;
 
   // Reflect active item in the menu
-  document.getElementById('view-projects-item').classList.toggle('active', !showMoney);
-  document.getElementById('view-money-item').classList.toggle('active', showMoney);
+  document.getElementById('view-projects-item').classList.toggle('active', isProj);
+  document.getElementById('view-money-item').classList.toggle('active', isMoney);
 
-  // Re-trigger a consistent entrance animation for whichever view is now visible,
-  // so switching either direction (and the initial load) animates identically.
-  if (showMoney) {
-    animateViewIn(moneySec);
+  // Refresh + animate whichever view is now visible (same entrance every time)
+  if (isMoney) {
+    renderStatement();
+    animateViewIn(financeWrap);
   } else {
     animateViewIn(stats); animateViewIn(addBar); animateViewIn(board);
   }
